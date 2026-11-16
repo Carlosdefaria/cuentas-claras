@@ -1,4 +1,4 @@
-# PRD – App de gastos compartidos (tipo Splitwise)
+# docs/PRD.md
 
 Nov 16, 2026 · @Carlos
 
