@@ -30,7 +30,9 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
 ## Seguridad
 - **El repo es público: nunca subir credenciales.** Secretos solo en `.env.local` (ignorado). Plantilla en `.env.example`.
 - RLS activado desde el primer día en **todas** las tablas (incluidas `settlements` y `activities`); acceso solo a miembros del grupo.
-- Funciones `SECURITY DEFINER` con `search_path` fijado y comprobación explícita de `auth.user_id()`.
+- Funciones `SECURITY DEFINER` con `search_path` fijado y comprobación explícita de `auth.uid()` (`neon_auth.user.id` es `uuid`).
+- El rol `authenticated` NO tiene USAGE en el esquema `auth`: `auth.uid()` solo se puede llamar dentro de funciones SECURITY DEFINER (p. ej. `app_private.is_member`), nunca directamente en una política.
+- Escrituras solo vía RPC; `authenticated` solo tiene SELECT. Tests de BD siempre con `SET ROLE authenticated`/`anonymous` (`neondb_owner` tiene BYPASSRLS).
 - `invite_code`: largo y aleatorio (≥128 bits), nunca secuencial.
 - Tests de RLS y migraciones de prueba: **solo contra la rama `test` de Neon, nunca production**.
   - `.env.local` → rama `production` (lo genera `neon deploy` / `neon env pull`).
@@ -43,5 +45,7 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
 
 ## Convenciones
 - UI en español; textos centralizados (preparados para i18n).
-- Comandos: `npm run dev`, `npm test` (Vitest), `npm run build` (tsc + Vite), `npm run lint` (oxlint).
+- Comandos: `npm run dev`, `npm test` (Vitest, dominio, sin red), `npm run build` (tsc + Vite), `npm run lint` (oxlint).
+- BD (solo rama `test`, vía `scripts/testDb.ts`): `npm run db:migrate` (registra en `app_migrations.applied`; no se editan migraciones aplicadas, se crea una nueva), `npm run test:db` (RLS/RPC), `npm run db:perf` (50 miembros × 5.000 gastos + EXPLAIN ANALYZE).
+- El contenedor cloud solo permite HTTPS: se usa el driver HTTP de Neon contra el host del endpoint de test (`NODE_USE_ENV_PROXY=1`, ya incluido en los scripts).
 - CLI de Neon en el contenedor cloud: `NEON_API_KEY=proxy-injected neon …` (el proxy inyecta la key real).
