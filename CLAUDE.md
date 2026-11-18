@@ -39,6 +39,17 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
   - `.env.test.local` → rama `test`. Los tests de BD leen **solo** este fichero.
   - `.neon` queda fijado en `production`; no cambiar con `neon checkout` sin `--no-env-pull`.
 
+## Riesgos conocidos
+- **Rendimiento de RLS en `expense_shares`** (migración 0002 aplazada): con 50 miembros, 5.000 gastos y
+  127.125 cuotas, leer las cuotas de un grupo tarda **~179 ms con RLS** (44 ms sin RLS; límite PRD 200 ms).
+  La política evalúa `is_member` fila a fila. Revisar al cargar datos reales; posible arreglo: que la
+  política calcule una sola vez los grupos del usuario. Medir con `npm run db:perf`.
+- **`pg_session_jwt` no está precargado** (se carga en cada conexión nueva del servidor al primer `auth.*`).
+  Si `request.jwt.claims` lo fija el rol `authenticated` antes de esa carga, `auth.uid()` es NULL en esa
+  primera transacción (falla de forma segura: "No autenticado"/sin filas). Los helpers de test llaman a
+  `auth.uid()` como owner antes de `SET ROLE` (`db/tests/helpers.ts`). Pendiente: comprobar con un JWT real
+  de Neon Auth contra la Data API tras un arranque en frío (la Data API usa el modo JWK, no este).
+
 ## Tests
 - La lógica de dominio (`src/domain/`: `money.ts`, `split.ts`, `balances.ts`; después la simplificación) son funciones puras con tests Vitest (`*.test.ts` al lado).
 - Tests primero: ningún cambio en esa lógica sin test que lo cubra.

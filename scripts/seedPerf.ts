@@ -114,11 +114,12 @@ async function measure(groupId: string, label: string, query: string, params: un
   let rows = 0
   for (let i = 0; i < 5; i++) {
     const res = await sql.transaction([
+      sql.query('select auth.uid()'), // carga pg_session_jwt antes de simular el JWT (ver db/tests/helpers.ts)
       sql.query('set local role authenticated'),
       sql.query(`select set_config('request.jwt.claims', $1, true)`, [claims]),
       sql.query(`explain (analyze, format json) ${query}`, params),
     ])
-    const plan = res[2][0]['QUERY PLAN'][0]
+    const plan = res[3][0]['QUERY PLAN'][0]
     runs.push(plan['Execution Time'])
     rows = plan.Plan['Actual Rows']
   }

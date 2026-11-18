@@ -35,7 +35,7 @@ export async function ensureUsers(names: string[]): Promise<Record<string, strin
  * Devuelve solo los resultados de `build`.
  */
 export async function asUser(userId: string | null, build: () => Query[]) {
-  const prelude: Query[] = [sql.query('set local role authenticated')]
+  const prelude: Query[] = [loadSessionJwt(), sql.query('set local role authenticated')]
   if (userId) {
     prelude.push(
       sql.query(`select set_config('request.jwt.claims', $1, true)`, [
@@ -49,8 +49,21 @@ export async function asUser(userId: string | null, build: () => Query[]) {
 
 /** Igual que asUser pero con el rol `anonymous` (peticiones sin token a la Data API). */
 export async function asAnonymous(build: () => Query[]) {
-  const results = await sql.transaction([sql.query('set local role anonymous'), ...build()])
-  return results.slice(1)
+  const results = await sql.transaction([loadSessionJwt(), sql.query('set local role anonymous'), ...build()])
+  return results.slice(2)
+}
+
+/**
+ * Fuerza la carga de pg_session_jwt en la conexión ANTES de simular el JWT.
+ *
+ * La extensión no está en shared_preload_libraries: se carga en cada conexión nueva del
+ * servidor la primera vez que se llama a auth.*. Si en ese momento request.jwt.claims ya lo
+ * había fijado el rol `authenticated`, ese valor se pierde y auth.uid() devuelve NULL en esa
+ * primera transacción (reproducido tras suspender la rama: solo falla la 1.ª transacción de
+ * cada conexión nueva). Llamar a auth.uid() como neondb_owner al principio lo evita.
+ */
+function loadSessionJwt(): Query {
+  return sql.query('select auth.uid()')
 }
 
 /** Primera fila de la primera consulta ejecutada como `userId`. */
