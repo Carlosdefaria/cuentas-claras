@@ -62,7 +62,7 @@ Todos comparten una necesidad: transparencia y cero fricción; los invitados no 
 
 ## 6. Reglas de negocio
 
-**Saldo de una persona** = lo que ha pagado − lo que le corresponde + pagos recibidos − pagos realizados. Positivo = le deben; negativo = debe.
+**Saldo de una persona** = lo que ha pagado − lo que le corresponde + pagos realizados − pagos recibidos. Positivo = le deben; negativo = debe.
 
 1. Los importes se guardan en **céntimos (enteros)**, nunca en decimales flotantes.
 2. En un reparto igual, el resto de céntimos se asigna de forma determinista (p. ej. al pagador o por orden de ID).
