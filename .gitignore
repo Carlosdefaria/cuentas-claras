@@ -1,0 +1,20 @@
+# Credenciales: el repo es público. Nunca subir ficheros .env reales.
+.env
+.env.local
+.env.*
+.env*.local
+!.env.example
+
+# Dependencias y builds
+node_modules/
+dist/
+coverage/
+.vercel/
+
+# Neon CLI (estado local / credenciales)
+.neon
+.neon/
+
+# Varios
+*.log
+.DS_Store

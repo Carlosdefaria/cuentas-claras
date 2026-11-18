@@ -1,0 +1,42 @@
+# CLAUDE.md – Cuentas Claras
+
+App web de gastos compartidos (tipo Splitwise). Requisitos completos en `docs/PRD.md`.
+Se construye por fases (PRD §11). Plan de trabajo: Fase 1 = auth, grupos, gastos con reparto igual, saldos.
+
+## Stack (decidido)
+- **Frontend:** React + Vite + TypeScript + Tailwind. Mobile-first.
+- **Backend / BD:** Neon — Postgres + Neon Auth (Better Auth gestionado), login por email.
+- **Acceso a datos:** Data API de Neon (PostgREST) con JWT de Neon Auth + **RLS** en todas las tablas.
+  Las operaciones de varias tablas (p. ej. gasto + repartos) van en funciones SQL (RPC) atómicas.
+- **Tests:** Vitest. **Despliegue:** Vercel.
+
+## Dinero (no negociable)
+- Importes siempre en **céntimos enteros** (`integer` en BD, entero en TS). Nunca floats ni `numeric` con decimales.
+- Moneda única **EUR** en el MVP. La columna `currency` existe pero siempre vale `'EUR'`.
+- Formatear a euros solo en la UI: `Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' })`.
+
+## Reglas de saldo (PRD §6)
+- Saldo = pagado − cuota + pagos recibidos − pagos realizados. Positivo = le deben.
+- La suma de saldos de un grupo es siempre 0. Los saldos **no se almacenan**: se calculan.
+- Reparto igual: los céntimos sobrantes se reparten 1 a 1 por orden ascendente de `user_id` (determinista).
+- Simplificación de deudas (Fase 2): voraz, mayor deudor ↔ mayor acreedor, ≤ n−1 pagos.
+- Borrado de gastos = soft delete (`deleted_at`).
+
+## Alcance del MVP
+Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin pedirlo
+(login social, multidivisa, recurrentes, OCR, pagos integrados, invitados sin cuenta, push, exportar).
+
+## Seguridad
+- **El repo es público: nunca subir credenciales.** Secretos solo en `.env.local` (ignorado). Plantilla en `.env.example`.
+- RLS activado desde el primer día en **todas** las tablas (incluidas `settlements` y `activities`); acceso solo a miembros del grupo.
+- Funciones `SECURITY DEFINER` con `search_path` fijado y comprobación explícita de `auth.user_id()`.
+- `invite_code`: largo y aleatorio (≥128 bits), nunca secuencial.
+- Tests de RLS y migraciones de prueba: **solo contra una rama de test de Neon, nunca production**.
+
+## Tests
+- La lógica de dominio (`src/domain/`: dinero, reparto, saldos, simplificación) son funciones puras con tests Vitest.
+- Tests primero: ningún cambio en esa lógica sin test que lo cubra.
+
+## Convenciones
+- UI en español; textos centralizados (preparados para i18n).
+- Comandos: `npm run dev`, `npm test`, `npm run build` (se confirmarán al crear el proyecto).
