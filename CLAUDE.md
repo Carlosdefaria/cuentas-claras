@@ -16,7 +16,8 @@ Se construye por fases (PRD §11). Plan de trabajo: Fase 1 = auth, grupos, gasto
 - Formatear a euros solo en la UI: `Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' })`.
 
 ## Reglas de saldo (PRD §6)
-- Saldo = pagado − cuota + pagos recibidos − pagos realizados. Positivo = le deben.
+- Saldo = pagado − cuota + pagos **realizados** − pagos **recibidos**. Positivo = le deben.
+  (El PRD §6 tiene los signos de los pagos al revés; esta es la versión correcta: pagar reduce tu deuda.)
 - La suma de saldos de un grupo es siempre 0. Los saldos **no se almacenan**: se calculan.
 - Reparto igual: los céntimos sobrantes se reparten 1 a 1 por orden ascendente de `user_id` (determinista).
 - Simplificación de deudas (Fase 2): voraz, mayor deudor ↔ mayor acreedor, ≤ n−1 pagos.
@@ -31,12 +32,16 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
 - RLS activado desde el primer día en **todas** las tablas (incluidas `settlements` y `activities`); acceso solo a miembros del grupo.
 - Funciones `SECURITY DEFINER` con `search_path` fijado y comprobación explícita de `auth.user_id()`.
 - `invite_code`: largo y aleatorio (≥128 bits), nunca secuencial.
-- Tests de RLS y migraciones de prueba: **solo contra una rama de test de Neon, nunca production**.
+- Tests de RLS y migraciones de prueba: **solo contra la rama `test` de Neon, nunca production**.
+  - `.env.local` → rama `production` (lo genera `neon deploy` / `neon env pull`).
+  - `.env.test.local` → rama `test`. Los tests de BD leen **solo** este fichero.
+  - `.neon` queda fijado en `production`; no cambiar con `neon checkout` sin `--no-env-pull`.
 
 ## Tests
-- La lógica de dominio (`src/domain/`: dinero, reparto, saldos, simplificación) son funciones puras con tests Vitest.
+- La lógica de dominio (`src/domain/`: `money.ts`, `split.ts`, `balances.ts`; después la simplificación) son funciones puras con tests Vitest (`*.test.ts` al lado).
 - Tests primero: ningún cambio en esa lógica sin test que lo cubra.
 
 ## Convenciones
 - UI en español; textos centralizados (preparados para i18n).
-- Comandos: `npm run dev`, `npm test`, `npm run build` (se confirmarán al crear el proyecto).
+- Comandos: `npm run dev`, `npm test` (Vitest), `npm run build` (tsc + Vite), `npm run lint` (oxlint).
+- CLI de Neon en el contenedor cloud: `NEON_API_KEY=proxy-injected neon …` (el proxy inyecta la key real).
