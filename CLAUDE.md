@@ -43,6 +43,23 @@ Se construye por fases (PRD §11). Plan de trabajo: Fase 1 = auth, grupos, gasto
 - iOS no tiene `beforeinstallprompt`: mostrar ayuda "Compartir → Añadir a pantalla de inicio".
 - Probar la instalación en móviles reales (iOS y Android), no solo en escritorio.
 
+### Sesión first-party (iOS) y service worker
+- El navegador solo habla con `/api/auth/*` de nuestro dominio: proxy same-origin (`server/authProxy.ts`, sobre
+  `handleAuthProxyRequest` de `@neon/auth/server`). En Vercel lo sirve `api/auth.ts`; en local, el plugin de Vite.
+  Destino **fijo por variable de entorno** (`NEON_AUTH_BASE_URL`), solo GET/POST, rutas validadas, ≤ 64 KB, `no-store`.
+  Nada de proxy abierto. `NEON_AUTH_COOKIE_SECRET` es secreto de servidor (≥ 32 caracteres).
+- El cliente de Auth apunta a `${origin}/api/auth`. El JWT para la Data API sale de `getSession()` (`session.token`);
+  por eso el proxy pide `get-session` con `disableCookieCache=true` (la caché del SDK responde sin JWT).
+- El SDK lanza excepciones en los errores de Auth (p. ej. `invalid_credentials`): capturarlas en la UI.
+- Verificación de email y recuperación de contraseña **por código (OTP), nunca por enlace**: en iOS la PWA
+  instalada no comparte cookies con Safari, y un enlace abriría Safari.
+- Serwist: estrategia **solo red** para `/api/auth/*` y la Data API. **Nunca cachear respuestas con datos de usuario.**
+- Dev en HTTPS (`@vitejs/plugin-basic-ssl`): WebKit/Safari solo guarda cookies `Secure` en contexto seguro.
+
+### Prioridad de plataforma
+- **iOS primero** (Safari y PWA instalada). Android, más adelante.
+- Pruebas automáticas de navegador en **WebKit y Chromium**.
+
 ### Skills de diseño
 - `impeccable`: base de diseño. `/impeccable init` al empezar (con el PRD como contexto); `polish` y `critique` al terminar cada pantalla.
 - `web-design-guidelines`: solo como auditoría antes de cada merge.
@@ -72,11 +89,12 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
   127.125 cuotas, leer las cuotas de un grupo tarda **~179 ms con RLS** (44 ms sin RLS; límite PRD 200 ms).
   La política evalúa `is_member` fila a fila. Revisar al cargar datos reales; posible arreglo: que la
   política calcule una sola vez los grupos del usuario. Medir con `npm run db:perf`.
-- **`pg_session_jwt` no está precargado** (se carga en cada conexión nueva del servidor al primer `auth.*`).
-  Si `request.jwt.claims` lo fija el rol `authenticated` antes de esa carga, `auth.uid()` es NULL en esa
-  primera transacción (falla de forma segura: "No autenticado"/sin filas). Los helpers de test llaman a
-  `auth.uid()` como owner antes de `SET ROLE` (`db/tests/helpers.ts`). Pendiente: comprobar con un JWT real
-  de Neon Auth contra la Data API tras un arranque en frío (la Data API usa el modo JWK, no este).
+- **`pg_session_jwt` no está precargado** (se carga en cada conexión nueva del servidor al primer `auth.*`)
+  y **al cargarse borra `request.jwt.claims`**: en la primera transacción de cada conexión nueva `auth.uid()`
+  es NULL. **Confirmado con JWT real en la Data API** tras despertar la rama: la primera llamada da
+  `403 No autenticado` (y las lecturas con RLS saldrían vacías); las siguientes van bien. Falla de forma
+  segura pero afecta a usuarios. Arreglo propuesto (migración 0002, pendiente de aprobar): leer el claim
+  antes de la primera llamada a `auth.*`. Los helpers de test cargan la extensión como owner antes de `SET ROLE`.
 
 ## Tests
 - La lógica de dominio (`src/domain/`: `money.ts`, `split.ts`, `balances.ts`; después la simplificación) son funciones puras con tests Vitest (`*.test.ts` al lado).
@@ -88,3 +106,5 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
 - BD (solo rama `test`, vía `scripts/testDb.ts`): `npm run db:migrate` (registra en `app_migrations.applied`; no se editan migraciones aplicadas, se crea una nueva), `npm run test:db` (RLS/RPC), `npm run db:perf` (50 miembros × 5.000 gastos + EXPLAIN ANALYZE).
 - El contenedor cloud solo permite HTTPS: se usa el driver HTTP de Neon contra el host del endpoint de test (`NODE_USE_ENV_PROXY=1`, ya incluido en los scripts).
 - CLI de Neon en el contenedor cloud: `NEON_API_KEY=proxy-injected neon …` (el proxy inyecta la key real).
+- `npm run dev` sirve en `https://localhost:5173` con el proxy de Auth; en el contenedor cloud lanzarlo con
+  `NODE_USE_ENV_PROXY=1` para que el proxy pueda salir a Neon Auth.
