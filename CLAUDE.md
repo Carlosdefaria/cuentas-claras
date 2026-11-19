@@ -75,8 +75,8 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
 ## Seguridad
 - **El repo es público: nunca subir credenciales.** Secretos solo en `.env.local` (ignorado). Plantilla en `.env.example`.
 - RLS activado desde el primer día en **todas** las tablas (incluidas `settlements` y `activities`); acceso solo a miembros del grupo.
-- Funciones `SECURITY DEFINER` con `search_path` fijado y comprobación explícita de `auth.uid()` (`neon_auth.user.id` es `uuid`).
-- El rol `authenticated` NO tiene USAGE en el esquema `auth`: `auth.uid()` solo se puede llamar dentro de funciones SECURITY DEFINER (p. ej. `app_private.is_member`), nunca directamente en una política.
+- Funciones `SECURITY DEFINER` con `search_path` fijado y comprobación explícita del usuario (`neon_auth.user.id` es `uuid`).
+- El usuario actual se obtiene **siempre con `app_private.current_user_id()`**, nunca con `auth.*` directo (ver el parche en Riesgos conocidos). El rol `authenticated` no tiene USAGE en el esquema `auth` y no puede ejecutar `current_user_id()`: solo la llaman funciones SECURITY DEFINER (p. ej. `app_private.is_member`).
 - Escrituras solo vía RPC; `authenticated` solo tiene SELECT. Tests de BD siempre con `SET ROLE authenticated`/`anonymous` (`neondb_owner` tiene BYPASSRLS).
 - `invite_code`: largo y aleatorio (≥128 bits), nunca secuencial.
 - Tests de RLS y migraciones de prueba: **solo contra la rama `test` de Neon, nunca production**.
@@ -89,12 +89,16 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
   127.125 cuotas, leer las cuotas de un grupo tarda **~179 ms con RLS** (44 ms sin RLS; límite PRD 200 ms).
   La política evalúa `is_member` fila a fila. Revisar al cargar datos reales; posible arreglo: que la
   política calcule una sola vez los grupos del usuario. Medir con `npm run db:perf`.
-- **`pg_session_jwt` no está precargado** (se carga en cada conexión nueva del servidor al primer `auth.*`)
-  y **al cargarse borra `request.jwt.claims`**: en la primera transacción de cada conexión nueva `auth.uid()`
-  es NULL. **Confirmado con JWT real en la Data API** tras despertar la rama: la primera llamada da
-  `403 No autenticado` (y las lecturas con RLS saldrían vacías); las siguientes van bien. Falla de forma
-  segura pero afecta a usuarios. Arreglo propuesto (migración 0002, pendiente de aprobar): leer el claim
-  antes de la primera llamada a `auth.*`. Los helpers de test cargan la extensión como owner antes de `SET ROLE`.
+- **PARCHE TEMPORAL `pg_session_jwt` (migraciones 0002 + 0004; 0003 fue un intento fallido, ya sustituido).**
+  La extensión no está precargada: se carga en cada conexión nueva del servidor con la primera llamada a `auth.*`
+  y **al cargarse borra `request.jwt.claims`**, así que `auth.uid()` era NULL en la primera transacción de cada
+  conexión nueva. Confirmado con JWT real por la Data API tras despertar la rama (`403 No autenticado` y lecturas
+  vacías). El parche es `app_private.current_user_id()`: lee el claim antes de llamar a `auth.uid()`, usa su `sub`
+  si `auth.uid()` falla y lo guarda para el resto de la transacción (`cuentas_claras.current_user_id`, atado a `now()`).
+  Devuelve NULL sin error si el rol es `anonymous`, el claim está mal formado o no hay identidad.
+  Cubierto por `db/tests/currentUserId.test.ts` y `db/tests/coldStart.test.ts` (suspende la rama `test`;
+  `NEON_API_KEY=proxy-injected npm run test:db`). **Retirar (migración nueva que vuelva a `auth.uid()`) cuando
+  Neon lo corrija**, y comprobar antes con `coldStart.test.ts` sin el parche.
 
 ## Tests
 - La lógica de dominio (`src/domain/`: `money.ts`, `split.ts`, `balances.ts`; después la simplificación) son funciones puras con tests Vitest (`*.test.ts` al lado).
