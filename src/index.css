@@ -91,22 +91,25 @@
    */
   .troquel {
     position: relative;
-    height: 1.25rem;
+    height: 1.5rem;
   }
+  /* Punteado central entre las dos muescas. */
   .troquel::before {
     content: "";
     position: absolute;
-    inset-inline: 0.875rem;
+    inset-inline: 1.125rem;
     top: 50%;
     border-top: 2px dashed var(--color-trazo);
   }
+  /* Muescas: semicírculos del color del fondo que muerden el borde de la participación. */
   .troquel::after {
     content: "";
     position: absolute;
-    inset: 0 -0.625rem;
+    inset: 0;
+    /* Solo la mitad interior: la exterior se pintaría sobre la sombra de la tarjeta. */
     background:
-      radial-gradient(circle at 0 50%, var(--troquel-fondo, var(--color-papel)) 0.625rem, transparent 0.66rem),
-      radial-gradient(circle at 100% 50%, var(--troquel-fondo, var(--color-papel)) 0.625rem, transparent 0.66rem);
+      radial-gradient(circle at 0 50%, var(--troquel-fondo, var(--color-papel)) 0.75rem, transparent calc(0.75rem + 0.5px)),
+      radial-gradient(circle at 100% 50%, var(--troquel-fondo, var(--color-papel)) 0.75rem, transparent calc(0.75rem + 0.5px));
     pointer-events: none;
   }
 }

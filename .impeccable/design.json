@@ -1,0 +1,315 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-19T13:34:10+00:00",
+  "title": "Design System: Cuentas Claras",
+  "extensions": {
+    "colorMeta": {
+      "papel": {
+        "role": "neutral",
+        "displayName": "Papel verde agua",
+        "tonalRamp": [
+          "#464947",
+          "#747976",
+          "#a3a9a6",
+          "#c6cec9",
+          "#eef5f2",
+          "#f4f8f6",
+          "#fafcfa",
+          "#fdfefd"
+        ]
+      },
+      "hoja": {
+        "role": "neutral",
+        "displayName": "Hoja",
+        "tonalRamp": [
+          "#4b4c4b",
+          "#7e7e7e",
+          "#b0b1b0",
+          "#d5d7d5",
+          "#fcfefc",
+          "#fdfefd",
+          "#fefefe",
+          "#ffffff"
+        ]
+      },
+      "tinta": {
+        "role": "neutral",
+        "displayName": "Tinta",
+        "tonalRamp": [
+          "#060b09",
+          "#0a130e",
+          "#0d1b14",
+          "#102019",
+          "#4e5c56",
+          "#89928e",
+          "#c4c9c6",
+          "#e7e9e8"
+        ]
+      },
+      "trazo": {
+        "role": "neutral",
+        "displayName": "Trazo",
+        "tonalRamp": [
+          "#383e3a",
+          "#5c6661",
+          "#829088",
+          "#9daea5",
+          "#cadad1",
+          "#dce6e0",
+          "#eef2f0",
+          "#f8faf9"
+        ]
+      },
+      "loteria": {
+        "role": "primary",
+        "displayName": "Verde lotería",
+        "tonalRamp": [
+          "#041a10",
+          "#062b1c",
+          "#093c26",
+          "#0b492f",
+          "#4a8069",
+          "#86aa9b",
+          "#c2d5cd",
+          "#e7eeeb"
+        ]
+      },
+      "sello": {
+        "role": "secondary",
+        "displayName": "Rojo sello",
+        "tonalRamp": [
+          "#360e0d",
+          "#5a1815",
+          "#7d221d",
+          "#982924",
+          "#c6645f",
+          "#d99894",
+          "#eccbca",
+          "#f7eaea"
+        ]
+      },
+      "favor": {
+        "role": "secondary",
+        "displayName": "Verde a favor",
+        "tonalRamp": [
+          "#042014",
+          "#083622",
+          "#0a4b30",
+          "#0d5b3a",
+          "#4b9073",
+          "#87b5a2",
+          "#c3dad0",
+          "#e7f0ec"
+        ]
+      },
+      "talon-salmon": {
+        "role": "tertiary",
+        "displayName": "Talón salmón",
+        "tonalRamp": [
+          "#4b423e",
+          "#7d6e68",
+          "#af9a91",
+          "#d4bbb0",
+          "#fbe5db",
+          "#fceee7",
+          "#fef6f3",
+          "#fefcfa"
+        ]
+      },
+      "talon-cielo": {
+        "role": "tertiary",
+        "displayName": "Talón cielo",
+        "tonalRamp": [
+          "#40454a",
+          "#6b747a",
+          "#96a2ac",
+          "#b6c4d0",
+          "#e0edf8",
+          "#eaf3fa",
+          "#f5f9fc",
+          "#fbfdfe"
+        ]
+      },
+      "talon-menta": {
+        "role": "tertiary",
+        "displayName": "Talón menta",
+        "tonalRamp": [
+          "#404743",
+          "#6b7770",
+          "#96a79c",
+          "#b6cabe",
+          "#e0f2e7",
+          "#eaf6ef",
+          "#f5fbf7",
+          "#fbfdfc"
+        ]
+      },
+      "talon-mantequilla": {
+        "role": "tertiary",
+        "displayName": "Talón mantequilla",
+        "tonalRamp": [
+          "#494639",
+          "#7a7660",
+          "#aaa486",
+          "#cfc8a2",
+          "#f6f0cf",
+          "#f9f5df",
+          "#fcfaef",
+          "#fefdf9"
+        ]
+      },
+      "talon-lila": {
+        "role": "tertiary",
+        "displayName": "Talón lila",
+        "tonalRamp": [
+          "#454249",
+          "#736e79",
+          "#a19aa9",
+          "#c4bbce",
+          "#ece5f5",
+          "#f2eef8",
+          "#f9f6fc",
+          "#fcfcfe"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "rotulo-titulo": {
+        "displayName": "Título de participación",
+        "purpose": "Talón de una participación, mayúsculas."
+      },
+      "rotulo-seccion": {
+        "displayName": "Título de sección",
+        "purpose": "Cabecera de Grupos, Cuenta…"
+      },
+      "rotulo-marca": {
+        "displayName": "Marca",
+        "purpose": "Nombre en la barra superior."
+      },
+      "body": {
+        "displayName": "Cuerpo",
+        "purpose": "Texto e inputs (≥16 px)."
+      },
+      "label": {
+        "displayName": "Etiqueta",
+        "purpose": "Etiquetas de campo y botones."
+      },
+      "small": {
+        "displayName": "Pequeño",
+        "purpose": "Ayudas, errores de campo, notas."
+      }
+    },
+    "shadows": [
+      {
+        "name": "participacion",
+        "value": "0 1px 2px rgb(19 38 29 / 0.08), 0 8px 24px -12px rgb(19 38 29 / 0.25)",
+        "purpose": "Participaciones sobre el papel."
+      },
+      {
+        "name": "tarjeta-plana",
+        "value": "0 1px 2px rgb(19 38 29 / 0.08)",
+        "purpose": "Tarjetas de datos."
+      },
+      {
+        "name": "foco-campo",
+        "value": "0 0 0 3px rgb(13 86 55 / 0.18)",
+        "purpose": "Halo de foco en campos."
+      }
+    ],
+    "motion": [
+      {
+        "name": "estado",
+        "value": "150ms ease-out",
+        "purpose": "Hover, foco y cambios de estado; sin coreografías de carga."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "columna",
+        "value": "28rem"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón primario",
+      "kind": "button",
+      "refersTo": "button-primario",
+      "description": "Acción principal de la pantalla, ancho completo.",
+      "html": "<button class=\"ds-btn-primario\">Entrar</button>",
+      "css": ".ds-btn-primario{display:inline-flex;align-items:center;justify-content:center;width:100%;height:48px;padding:0 16px;border:0;border-radius:8px;background:var(--color-loteria,#0d5637);color:#fff;font:600 1rem system-ui,-apple-system,sans-serif;transition:background-color .15s}.ds-btn-primario:hover,.ds-btn-primario:active{background:var(--color-loteria-hondo,#0a4029)}.ds-btn-primario:focus-visible{outline:3px solid var(--color-loteria,#0d5637);outline-offset:2px}.ds-btn-primario:disabled{opacity:.6;cursor:not-allowed}"
+    },
+    {
+      "name": "Botón peligro",
+      "kind": "button",
+      "refersTo": "button-peligro",
+      "description": "Acciones destructivas (cerrar sesión).",
+      "html": "<button class=\"ds-btn-peligro\">Cerrar sesión</button>",
+      "css": ".ds-btn-peligro{display:inline-flex;align-items:center;justify-content:center;width:100%;height:48px;border:1px solid rgb(179 48 42/.4);border-radius:8px;background:#fff;color:var(--color-sello,#b3302a);font:600 1rem system-ui,-apple-system,sans-serif;transition:background-color .15s}.ds-btn-peligro:hover{background:var(--color-sello-claro,#fbe3df)}.ds-btn-peligro:focus-visible{outline:3px solid var(--color-loteria,#0d5637);outline-offset:2px}"
+    },
+    {
+      "name": "Campo",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo con etiqueta visible, ≥16 px.",
+      "html": "<label class=\"ds-field\"><span>Email</span><input class=\"ds-input\" type=\"email\" placeholder=\"ana@ejemplo.com\"></label>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:6px;font:600 .9375rem system-ui,-apple-system,sans-serif;color:var(--color-tinta,#13261d)}.ds-input{height:48px;padding:0 14px;border:1px solid var(--color-trazo,#b9cdc2);border-radius:8px;background:#fff;color:var(--color-tinta,#13261d);font:400 16px system-ui,-apple-system,sans-serif;transition:border-color .15s,box-shadow .15s}.ds-input:focus{outline:0;border-color:var(--color-loteria,#0d5637);box-shadow:0 0 0 3px rgb(13 86 55/.18)}"
+    },
+    {
+      "name": "Barra inferior",
+      "kind": "nav",
+      "refersTo": "barra-inferior",
+      "description": "Secciones principales; pestaña activa en verde lotería.",
+      "html": "<nav class=\"ds-tabs\"><a class=\"ds-tab is-active\" href=\"#\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.25\"><path d=\"M18 21a8 8 0 0 0-16 0\"/><circle cx=\"10\" cy=\"8\" r=\"5\"/><path d=\"M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3\"/></svg>Grupos</a><a class=\"ds-tab\" href=\"#\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\"><circle cx=\"12\" cy=\"8\" r=\"5\"/><path d=\"M20 21a8 8 0 0 0-16 0\"/></svg>Cuenta</a></nav>",
+      "css": ".ds-tabs{display:flex;border-top:1px solid var(--color-trazo,#b9cdc2);background:var(--color-hoja,#fbfdfb)}.ds-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:56px;font:600 .75rem system-ui,-apple-system,sans-serif;color:var(--color-tinta-tenue,#5b7366);text-decoration:none;transition:color .15s}.ds-tab:hover{color:var(--color-tinta,#13261d)}.ds-tab.is-active{color:var(--color-loteria,#0d5637)}.ds-tab:focus-visible{outline:3px solid var(--color-loteria,#0d5637);outline-offset:-3px}"
+    },
+    {
+      "name": "Participación",
+      "kind": "custom",
+      "refersTo": "participacion",
+      "description": "Talón de color, línea troquelada con muescas y cuerpo claro.",
+      "html": "<section class=\"ds-part\"><div class=\"ds-part-talon\"><h1>Entra en tu cuenta</h1></div><div class=\"ds-troquel\"></div><div class=\"ds-part-cuerpo\">Contenido</div></section>",
+      "css": ".ds-part{border-radius:12px;background:var(--color-hoja,#fbfdfb);box-shadow:0 1px 2px rgb(19 38 29/.08),0 8px 24px -12px rgb(19 38 29/.25)}.ds-part-talon{background:var(--color-talon-salmon,#fadccf);border-radius:12px 12px 0 0;padding:20px 20px 12px}.ds-part-talon h1{margin:0;font:700 1.875rem/1.05 'Barlow Condensed',system-ui,sans-serif;text-transform:uppercase;letter-spacing:.01em;color:var(--color-tinta,#13261d)}.ds-troquel{position:relative;height:24px;background:linear-gradient(to bottom,var(--color-talon-salmon,#fadccf) 50%,var(--color-hoja,#fbfdfb) 50%)}.ds-troquel::before{content:'';position:absolute;left:18px;right:18px;top:50%;border-top:2px dashed var(--color-trazo,#b9cdc2)}.ds-troquel::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 0 50%,var(--color-papel,#e9f2ed) 12px,transparent 12.5px),radial-gradient(circle at 100% 50%,var(--color-papel,#e9f2ed) 12px,transparent 12.5px)}.ds-part-cuerpo{padding:12px 20px 24px;font:400 1rem system-ui,-apple-system,sans-serif}"
+    }
+  ],
+  "narrative": {
+    "northStar": "La participación de lotería",
+    "overview": "Repartir dinero entre amigos ya tiene un objeto en España: la participación de lotería. Cuentas Claras toma de él el papel de color de cada talón, la línea troquelada, la grotesca condensada de los rótulos y la disciplina de los números, sobre la estructura de una buena app móvil. Es una superficie Operate: el mundo aporta tipo, paleta, densidad y un gesto propio, nunca la navegación ni los controles.",
+    "keyCharacteristics": [
+      "Fondo de papel verde agua pálido, nunca crema.",
+      "Barra de app en verde lotería con el nombre en grotesca condensada.",
+      "Cada bloque principal es una participación: talón de color arriba, línea troquelada con muescas, cuerpo claro.",
+      "Interfaz y cifras en la sans del sistema, con números tabulares.",
+      "Rojo sello solo para «debes», errores y acciones destructivas; verde para «te deben»."
+    ],
+    "rules": [
+      {
+        "name": "The Red Means Money Rule",
+        "body": "El rojo sello solo marca deuda, error o destrucción; nunca decoración.",
+        "section": "colors"
+      },
+      {
+        "name": "The Paper Not Cream Rule",
+        "body": "Los fondos son verdes pálidos o blancos tintados de verde; el crema queda fuera.",
+        "section": "colors"
+      },
+      {
+        "name": "The Condensed Is For Signs Rule",
+        "body": "La condensada nunca va en etiquetas, botones, campos ni cifras.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Do usar una participación para el bloque principal de una pantalla de tarea.",
+      "Do reservar el rojo sello para deuda, errores y acciones destructivas.",
+      "Do mostrar carga (esqueleto), vacío (qué hacer) y error (con Reintentar) en cada pantalla.",
+      "Do mantener zonas táctiles ≥44 px e inputs ≥16 px."
+    ],
+    "donts": [
+      "Don't usar la condensada en etiquetas, botones o cifras.",
+      "Don't añadir texturas de papel, guilloches ni sellos falsos: el mundo entra por color, tipo y troquel.",
+      "Don't usar fondos crema ni acentos neón.",
+      "Don't poner antetítulos (kickers) sobre los títulos."
+    ]
+  }
+}
