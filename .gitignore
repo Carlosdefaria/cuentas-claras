@@ -28,3 +28,12 @@ dist-ssr/
 
 # Binario del motor de impeccable (se descarga en el primer uso)
 .claude/skills/impeccable/scripts/bin/
+
+# Playwright
+test-results/
+playwright-report/
+
+# impeccable: material de trabajo (se suben PRODUCT.md, DESIGN.md, .impeccable/surfaces/, config y design.json)
+.impeccable/review/
+.impeccable/mocks/
+.impeccable/questions/

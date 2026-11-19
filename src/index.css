@@ -1,1 +1,121 @@
 @import "tailwindcss";
+@import "@fontsource/barlow-condensed/latin-600.css";
+@import "@fontsource/barlow-condensed/latin-700.css";
+
+/*
+ * Mundo visual: participaciones de lotería (ver .impeccable/surfaces/src-screens-auth.md).
+ * Papel verde agua pálido, tinta verde casi negra, barra en verde lotería, sello rojo y talones
+ * de colores suaves. Rótulos en grotesca condensada; interfaz y cifras en la sans del sistema.
+ */
+@theme {
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-rotulo: "Barlow Condensed", system-ui, sans-serif;
+
+  --color-papel: #e9f2ed;
+  --color-papel-hondo: #dbe9e1;
+  --color-hoja: #fbfdfb;
+  --color-tinta: #13261d;
+  --color-tinta-suave: #3d5749;
+  --color-tinta-tenue: #5b7366;
+  --color-trazo: #b9cdc2;
+  --color-loteria: #0d5637;
+  --color-loteria-hondo: #0a4029;
+  --color-loteria-claro: #cfe6d8;
+  --color-sello: #b3302a;
+  --color-sello-claro: #fbe3df;
+  --color-favor: #0f6b44;
+
+  /* Talones: un papel por persona. */
+  --color-talon-menta: #d6eedf;
+  --color-talon-salmon: #fadccf;
+  --color-talon-cielo: #d6e7f5;
+  --color-talon-mantequilla: #f3ebbf;
+  --color-talon-lila: #e6dcf2;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    background: var(--color-loteria);
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--color-papel);
+    color: var(--color-tinta);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ::selection {
+    background: var(--color-talon-salmon);
+    color: var(--color-tinta);
+  }
+
+  input,
+  button,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* ≥ 16 px en los campos: iOS no hace zoom al enfocarlos. */
+  input,
+  textarea,
+  select {
+    font-size: max(1rem, 16px);
+    caret-color: var(--color-loteria);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-loteria);
+    outline-offset: 2px;
+  }
+
+  a {
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+  }
+}
+
+@layer components {
+  /*
+   * Línea troquelada de una participación: punteado central y dos muescas en los bordes del
+   * color del fondo, como el corte que separa el talón del cuerpo.
+   */
+  .troquel {
+    position: relative;
+    height: 1.25rem;
+  }
+  .troquel::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0.875rem;
+    top: 50%;
+    border-top: 2px dashed var(--color-trazo);
+  }
+  .troquel::after {
+    content: "";
+    position: absolute;
+    inset: 0 -0.625rem;
+    background:
+      radial-gradient(circle at 0 50%, var(--troquel-fondo, var(--color-papel)) 0.625rem, transparent 0.66rem),
+      radial-gradient(circle at 100% 50%, var(--troquel-fondo, var(--color-papel)) 0.625rem, transparent 0.66rem);
+    pointer-events: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

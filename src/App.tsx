@@ -1,8 +1,40 @@
-// Marcador temporal: la UI de la Fase 1 llega después de los tests y migraciones.
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router'
+import { SessionProvider } from './auth/session'
+import { GuestOnly, RequireAuth } from './auth/guards'
+import { AppShell } from './components/AppShell'
+import { AuthForm } from './screens/auth/AuthForm'
+import { Groups } from './screens/groups/Groups'
+import { Account } from './screens/account/Account'
+
+const routes = [
+  {
+    element: <GuestOnly />,
+    children: [
+      { path: '/entrar', element: <AuthForm mode="sign-in" /> },
+      { path: '/registro', element: <AuthForm mode="sign-up" /> },
+    ],
+  },
+  {
+    element: <RequireAuth />,
+    children: [
+      {
+        element: <AppShell />,
+        children: [
+          { path: '/', element: <Groups /> },
+          { path: '/cuenta', element: <Account /> },
+        ],
+      },
+    ],
+  },
+  { path: '*', element: <Navigate to="/" replace /> },
+]
+
+const router = createBrowserRouter(routes)
+
 export default function App() {
   return (
-    <main className="min-h-dvh grid place-items-center p-4">
-      <h1 className="text-2xl font-semibold">Cuentas Claras</h1>
-    </main>
+    <SessionProvider>
+      <RouterProvider router={router} />
+    </SessionProvider>
   )
 }
