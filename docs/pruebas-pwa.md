@@ -24,14 +24,19 @@ Apunta en cada prueba: modelo de iPhone, versión de iOS, dónde (Safari o app i
 - [ ] Cerrar sesión → vuelve a la pantalla de entrada.
 - [ ] Entrar con contraseña incorrecta → mensaje claro en español ("Email o contraseña incorrectos").
 - [ ] Al tocar un campo de texto **no hace zoom**, pero se puede ampliar con dos dedos.
-- [ ] Se muestra la **ayuda de instalación**: Compartir → "Añadir a pantalla de inicio".
+- [ ] En Entrar/Registro aparece la **ayuda de instalación** compacta («Instálala en tu iPhone»,
+      Compartir → "Añadir a pantalla de inicio") y **el botón Entrar sigue visible sin hacer scroll**.
+- [ ] La ✕ oculta la ayuda y no vuelve a salir al recargar. En Cuenta sigue disponible (versión completa).
+- [ ] Los pasos coinciden con lo que ve Safari en tu versión de iOS (Compartir puede estar en el menú ···).
 
 ## 2. Instalación
 
 - [ ] Compartir → "Añadir a pantalla de inicio". El nombre propuesto es el corto de la app.
-- [ ] El icono de la pantalla de inicio es el de la app (`apple-touch-icon`), no una captura de la web.
+- [ ] El icono de la pantalla de inicio es el de la app («talones en abanico» sobre verde), no una captura de la web,
+      y el nombre bajo el icono es «Cuentas».
 - [ ] Abrir desde el icono: **sin barra de Safari** (modo standalone) y barra de estado legible.
-- [ ] Pantalla de arranque sin destellos blancos largos.
+- [ ] Pantalla de arranque sin destellos blancos largos (no hay `apple-touch-startup-image` a propósito; si se ve
+      un destello blanco molesto, anotarlo y se añaden).
 - [ ] Dentro de la app instalada, la ayuda de instalación **ya no aparece**.
 
 ## 3. Sesión dentro de la app instalada (lo más delicado)
@@ -71,7 +76,8 @@ Apunta en cada prueba: modelo de iPhone, versión de iOS, dónde (Safari o app i
 - [ ] Con la app abierta, activar el modo avión → aviso de sin conexión, no una pantalla en blanco.
 - [ ] Abrir la app en modo avión → carga la interfaz y avisa de que no hay conexión
       (los datos del usuario **no** deben mostrarse desde caché).
-- [ ] Tras publicar una versión nueva, al reabrir la app se actualiza (o avisa de que hay versión nueva).
+- [ ] Tras publicar una versión nueva, al volver a la app aparece «Hay una versión nueva · Actualizar»;
+      la app **no se recarga sola**. Al pulsar Actualizar recarga con la versión nueva.
 
 ## 6. Qué anotar si algo falla
 

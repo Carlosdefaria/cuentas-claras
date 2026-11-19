@@ -68,7 +68,9 @@ export function InstallHelp({ context, className = '' }: { context: 'acceso' | '
       className={`rounded-xl bg-hoja px-5 pb-5 pt-4 shadow-[0_1px_2px_rgb(19_38_29/0.08)] ${className}`}
     >
       <h2 id="ayuda-instalar" className="text-lg font-semibold leading-snug text-tinta">
-        {T.title(device)}
+        {T.titleBefore}
+        <span translate="no">{es.appName}</span>
+        {T.titleAfter(device)}
       </h2>
       <p className="mt-1 text-[0.9375rem] text-tinta-suave">{T.bodyAccount}</p>
       <ol className="mt-3 flex flex-col gap-2.5 text-[0.9375rem] text-tinta">

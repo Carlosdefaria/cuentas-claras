@@ -212,6 +212,26 @@ de mostrar/ocultar de 48 px.
 - **Barra inferior** blanca con borde superior: pestañas con icono (lucide, trazo 1.75; 2.25 activo) y
   etiqueta; activa en verde lotería.
 
+### Avisos de la app
+Franja a ancho completo bajo la barra superior (sin tapar contenido, `aria-live="polite"`):
+- **Sin conexión**: fondo `papel-hondo`, icono `WifiOff` y «Sin conexión. Cuando vuelva, podrás seguir.»
+  Nunca se muestran datos de caché: la pantalla dice qué no se ha podido cargar y ofrece Reintentar.
+- **Versión nueva**: fondo `loteria-claro`, «Hay una versión nueva.» y botón «Actualizar» (44 px, verde lotería).
+  La app no se recarga sola: espera a que la persona pulse.
+
+### Ayuda de instalación (iOS)
+Tarjeta plana (`hoja`, 12 px) solo en iOS sin instalar (no en navegadores dentro de otras apps).
+- **Entrar / Registro**: compacta y descartable (✕ de 44 px): «Instálala en tu iPhone», por qué hacerlo
+  antes de entrar y dos pasos con número en círculo `loteria-claro` e icono lucide (`Share`, `SquarePlus`).
+  No debe empujar el botón principal fuera de la primera pantalla.
+- **Cuenta**: completa, sin descartar, con el tercer paso (volver a entrar en la app instalada).
+
+### Icono de la app
+«Talones en abanico»: tres participaciones (cielo, menta y salmón delante) abiertas sobre verde lotería,
+con troquel y muescas reales, y «CC» en Barlow Condensed en la del frente. Fuente en `design/icon/*.svg`;
+los PNG (192, 512, maskable 512 con el motivo en el 80 % central, `apple-touch-icon` 180 opaco) se generan con
+`npm run icons`. El favicon (`public/favicon.svg`) es el mismo abanico sin texto.
+
 ### Participación (componente propio)
 Talón superior en papel de color con el título en condensada, línea troquelada con muescas y cuerpo en
 `hoja` con el contenido. Es el contenedor de formularios clave y, más adelante, de cada parte de un gasto.

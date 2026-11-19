@@ -64,7 +64,8 @@ export const es = {
     update: 'Actualizar',
     updating: 'Actualizando…',
     install: {
-      title: (device: 'iPhone' | 'iPad') => `Instala Cuentas Claras en tu ${device}`,
+      titleBefore: 'Instala ',
+      titleAfter: (device: 'iPhone' | 'iPad') => ` en tu ${device}`,
       titleShort: (device: 'iPhone' | 'iPad') => `Instálala en tu ${device}`,
       bodyAccess: 'Mejor antes de entrar: la app instalada no comparte la sesión con Safari.',
       bodyAccount: 'La tendrás a mano en la pantalla de inicio, a pantalla completa.',
