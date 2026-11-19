@@ -47,6 +47,9 @@ Se construye por fases (PRD §11). Plan de trabajo: Fase 1 = auth, grupos, gasto
 - `impeccable`: base de diseño. `/impeccable init` al empezar (con el PRD como contexto); `polish` y `critique` al terminar cada pantalla.
 - `web-design-guidelines`: solo como auditoría antes de cada merge.
 - No cargar otras skills de diseño a la vez.
+- Instaladas en `.claude/skills/` (versiones fijadas en `skills-lock.json`). De `impeccable` se usa la variante para
+  Claude Code del repo (`.claude/skills/impeccable` del commit `b49177d`), no la genérica `.agents/` que copia
+  `npx skills add` (apunta a rutas `.agents/` y no es invocable con `/impeccable`). Si se actualiza, repetir ese cambio.
 
 ## Alcance del MVP
 Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin pedirlo
