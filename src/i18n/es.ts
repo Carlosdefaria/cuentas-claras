@@ -7,6 +7,7 @@ export const es = {
     back: 'Volver',
     retry: 'Reintentar',
     loading: 'Cargando…',
+    skipToContent: 'Saltar al contenido',
   },
   auth: {
     signIn: {

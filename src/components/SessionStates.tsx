@@ -10,7 +10,7 @@ export function SessionChecking() {
   return (
     <div className="flex min-h-dvh flex-col">
       <TopBar />
-      <main className="mx-auto w-full max-w-md flex-1 px-4 pt-8" aria-busy="true">
+      <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-md flex-1 px-4 pt-8" aria-busy="true">
         <p className="sr-only" role="status">
           {es.auth.session.checking}
         </p>
@@ -32,7 +32,7 @@ export function SessionError({ error, onRetry }: { error: unknown; onRetry: () =
   return (
     <div className="flex min-h-dvh flex-col">
       <TopBar />
-      <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center px-6 pt-16 text-center">
+      <main id="contenido" tabIndex={-1} className="mx-auto flex w-full max-w-md flex-1 flex-col items-center px-6 pt-16 text-center">
         <WifiOff aria-hidden className="size-10 text-tinta-suave" strokeWidth={1.75} />
         <h1 className="mt-4 text-xl font-semibold text-tinta">{es.auth.session.errorTitle}</h1>
         <p className="mt-2 text-tinta-suave">{authErrorMessage(error)}</p>

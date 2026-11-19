@@ -117,8 +117,22 @@ test('los campos no provocan zoom en iOS (fuente ≥ 16 px) y los botones miden 
     const size = await input.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))
     expect(size).toBeGreaterThanOrEqual(16)
   }
-  for (const control of await page.locator('button, a').all()) {
+  // El enlace «Saltar al contenido» está oculto hasta que recibe el foco (se prueba aparte).
+  for (const control of await page.locator('button, a:not([href="#contenido"])').all()) {
     const box = await control.boundingBox()
     if (box) expect(box.height).toBeGreaterThanOrEqual(44)
   }
+})
+
+test('«Saltar al contenido» aparece con el teclado y lleva el foco al contenido', async ({ page, browserName }) => {
+  // En WebKit, Tab no recorre enlaces salvo que lo active el sistema (Opción+Tab en Safari).
+  test.skip(browserName === 'webkit', 'Tab no enfoca enlaces en WebKit por defecto')
+  await page.goto('/entrar')
+  await page.keyboard.press('Tab')
+  const skip = page.getByRole('link', { name: 'Saltar al contenido' })
+  await expect(skip).toBeFocused()
+  const box = await skip.boundingBox()
+  expect(box?.height).toBeGreaterThanOrEqual(44)
+  await page.keyboard.press('Enter')
+  await expect(page.locator('main#contenido')).toBeFocused()
 })
