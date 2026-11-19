@@ -1,0 +1,231 @@
+---
+name: Cuentas Claras
+description: Gastos compartidos en grupo, al céntimo; PWA en español con el mundo de las participaciones de lotería.
+colors:
+  papel: "#e9f2ed"
+  papel-hondo: "#dbe9e1"
+  hoja: "#fbfdfb"
+  tinta: "#13261d"
+  tinta-suave: "#3d5749"
+  tinta-tenue: "#5b7366"
+  trazo: "#b9cdc2"
+  loteria: "#0d5637"
+  loteria-hondo: "#0a4029"
+  loteria-claro: "#cfe6d8"
+  sello: "#b3302a"
+  sello-claro: "#fbe3df"
+  favor: "#0f6b44"
+  talon-menta: "#d6eedf"
+  talon-salmon: "#fadccf"
+  talon-cielo: "#d6e7f5"
+  talon-mantequilla: "#f3ebbf"
+  talon-lila: "#e6dcf2"
+typography:
+  rotulo-titulo:
+    fontFamily: "Barlow Condensed, system-ui, sans-serif"
+    fontSize: "1.875rem"
+    fontWeight: 700
+    lineHeight: 1.05
+    letterSpacing: "0.01em"
+  rotulo-seccion:
+    fontFamily: "Barlow Condensed, system-ui, sans-serif"
+    fontSize: "2rem"
+    fontWeight: 700
+    lineHeight: 1
+    letterSpacing: "0.01em"
+  rotulo-marca:
+    fontFamily: "Barlow Condensed, system-ui, sans-serif"
+    fontSize: "1.375rem"
+    fontWeight: 700
+    lineHeight: 1
+    letterSpacing: "0.04em"
+  body:
+    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif"
+    fontSize: "1rem"
+    fontWeight: 400
+    lineHeight: 1.5
+    letterSpacing: "0em"
+  label:
+    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif"
+    fontSize: "0.9375rem"
+    fontWeight: 600
+    lineHeight: 1.4
+    letterSpacing: "0em"
+  small:
+    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 400
+    lineHeight: 1.4
+    letterSpacing: "0em"
+rounded:
+  control: "8px"
+  participacion: "12px"
+spacing:
+  xs: "6px"
+  sm: "12px"
+  md: "20px"
+  lg: "24px"
+  xl: "32px"
+components:
+  button-primario:
+    backgroundColor: "{colors.loteria}"
+    textColor: "#ffffff"
+    typography: "{typography.label}"
+    rounded: "{rounded.control}"
+    padding: "0 16px"
+    height: "48px"
+  button-primario-hover:
+    backgroundColor: "{colors.loteria-hondo}"
+  button-peligro:
+    backgroundColor: "#ffffff"
+    textColor: "{colors.sello}"
+    typography: "{typography.label}"
+    rounded: "{rounded.control}"
+    height: "48px"
+  button-peligro-hover:
+    backgroundColor: "{colors.sello-claro}"
+  input:
+    backgroundColor: "#ffffff"
+    textColor: "{colors.tinta}"
+    typography: "{typography.body}"
+    rounded: "{rounded.control}"
+    padding: "0 14px"
+    height: "48px"
+  participacion:
+    backgroundColor: "{colors.hoja}"
+    rounded: "{rounded.participacion}"
+  barra-superior:
+    backgroundColor: "{colors.loteria}"
+    textColor: "#ffffff"
+    height: "56px"
+  barra-inferior:
+    backgroundColor: "{colors.hoja}"
+    textColor: "{colors.tinta-tenue}"
+    height: "56px"
+---
+
+# Design System: Cuentas Claras
+
+## Overview
+
+**Creative North Star: "La participación de lotería"**
+
+Repartir dinero entre amigos ya tiene un objeto en España: la participación de lotería, el boleto que
+se divide en partes y se reparte en el grupo. Cuentas Claras toma de él solo lo que sirve a una app de
+trabajo: el papel de color de cada talón, la línea troquelada que separa talón y cuerpo, la grotesca
+condensada de los rótulos y la disciplina de los números. La estructura es la de cualquier buena app
+móvil: barra superior, barra inferior de secciones, formularios y botones estándar.
+
+Es una superficie Operate: la herramienta desaparece en la tarea (apuntar un gasto, ver quién debe a
+quién). El mundo aporta tipo, paleta, densidad y un gesto propio, nunca la navegación ni los controles.
+Se usa con una mano en una terraza, un taxi o el súper, casi siempre de día: modo claro.
+
+**Key Characteristics:**
+- Fondo de papel verde agua pálido, nunca crema.
+- Barra de app en verde lotería con el nombre en grotesca condensada.
+- Cada bloque principal es una participación: talón de color arriba, línea troquelada con muescas, cuerpo claro.
+- Interfaz y cifras en la sans del sistema, con números tabulares.
+- Rojo sello solo para «debes», errores y acciones destructivas; verde para «te deben».
+
+## Colors
+
+Estrategia Restrained con barra comprometida: neutros tintados de verde, un acento (verde lotería) que
+pinta la barra de la app y las acciones principales, y talones de colores suaves que identifican personas.
+
+### Primary
+- **Verde lotería** (`loteria` #0d5637): barra superior, botón principal, enlaces, foco, pestaña activa.
+  Hover/pulsado: `loteria-hondo` #0a4029. Fondo de esqueleto/acción suave: `loteria-claro` #cfe6d8.
+
+### Secondary
+- **Rojo sello** (`sello` #b3302a): errores, «debes» y acciones destructivas (cerrar sesión).
+  Fondo de alerta: `sello-claro` #fbe3df.
+- **Verde a favor** (`favor` #0f6b44): «te deben».
+
+### Tertiary
+- **Talones** (`talon-salmon`, `talon-cielo`, `talon-menta`, `talon-mantequilla`, `talon-lila`): papel del
+  talón de una participación. Hoy: salmón en Entrar, cielo en Crear cuenta. En grupos, uno por persona.
+
+### Neutral
+- `papel` #e9f2ed (fondo de página), `papel-hondo` #dbe9e1 (segunda capa, esqueletos), `hoja` #fbfdfb
+  (cuerpo de participaciones y tarjetas, barra inferior), `trazo` #b9cdc2 (bordes y troquel).
+- Tinta: `tinta` #13261d (texto), `tinta-suave` #3d5749 (secundario, ≥4.5:1 sobre papel), `tinta-tenue`
+  #5b7366 (pestañas inactivas, notas).
+
+### Named Rules
+**The Red Means Money Rule.** El rojo sello solo marca deuda, error o destrucción; nunca decoración.
+**The Paper Not Cream Rule.** Los fondos son verdes pálidos o blancos tintados de verde; el crema queda fuera.
+
+## Typography
+
+Una sans del sistema para toda la interfaz (SF en iOS) con números tabulares por defecto; Barlow
+Condensed (autoalojada con @fontsource, pesos 600/700) solo para rótulos en mayúsculas: marca, título de
+participación y título de sección. Escala fija en rem; inputs a ≥16 px para que iOS no haga zoom.
+
+### Hierarchy
+- **Marca** (`rotulo-marca`): 1.375rem / 700 / mayúsculas / tracking 0.04em, blanco sobre verde lotería.
+- **Título de sección** (`rotulo-seccion`): 2rem / 700 / mayúsculas.
+- **Título de participación** (`rotulo-titulo`): 1.875rem / 700 / mayúsculas.
+- **Cuerpo** (`body`): 1rem / 1.5. **Etiqueta** (`label`): 0.9375rem / 600. **Pequeño** (`small`): 0.875rem.
+
+### Named Rules
+**The Condensed Is For Signs Rule.** La condensada nunca va en etiquetas, botones, campos ni cifras.
+
+## Layout
+
+Columna única de máximo 28rem (`max-w-md`) centrada, con 16 px de margen lateral. Barra superior de
+56 px más `env(safe-area-inset-top)`; barra inferior fija de 56 px más `env(safe-area-inset-bottom)` y el
+contenido reserva ese hueco. `viewport-fit=cover`. Separación: 20 px entre campos, 24–32 px entre bloques.
+En escritorio la misma columna centrada.
+
+## Elevation & Depth
+
+Plano con una sola elevación: las participaciones y tarjetas flotan levemente sobre el papel.
+
+### Shadow Vocabulary
+- **participacion**: `0 1px 2px rgb(19 38 29 / 0.08), 0 8px 24px -12px rgb(19 38 29 / 0.25)`.
+- **tarjeta-plana**: `0 1px 2px rgb(19 38 29 / 0.08)`.
+- **foco de campo**: `0 0 0 3px rgb(13 86 55 / 0.18)` más borde verde lotería.
+
+## Shapes
+
+Radios contenidos: 8 px en controles, 12 px en participaciones y tarjetas. La única forma del mundo es el
+troquel: punteado de 2 px en `trazo` y dos muescas semicirculares de 12 px de radio que muerden el borde.
+
+## Components
+
+### Buttons
+- **Primario**: 48 px de alto, ancho completo, verde lotería, texto blanco 600; hover/pulsado verde hondo;
+  deshabilitado al 60 %; cargando con icono giratorio y texto en gerundio («Entrando…»).
+- **Peligro**: blanco con borde rojo al 40 % y texto rojo; hover fondo `sello-claro`.
+
+### Cards / Containers
+- **Tarjeta plana** (`hoja`, 12 px, sombra plana) para datos de cuenta.
+- **Estado vacío**: borde discontinuo de 2 px en `trazo`, texto centrado, explica qué hacer primero.
+
+### Inputs / Fields
+Etiqueta visible encima (600), campo de 48 px blanco con borde `trazo`, foco con borde verde y halo
+suave, error con borde y texto en rojo sello (`aria-invalid` + `aria-describedby`). Contraseña con botón
+de mostrar/ocultar de 48 px.
+
+### Navigation
+- **Barra superior** verde con la marca; en pantallas secundarias, botón «‹ Volver» (≥44 px) a la izquierda.
+- **Barra inferior** blanca con borde superior: pestañas con icono (lucide, trazo 1.75; 2.25 activo) y
+  etiqueta; activa en verde lotería.
+
+### Participación (componente propio)
+Talón superior en papel de color con el título en condensada, línea troquelada con muescas y cuerpo en
+`hoja` con el contenido. Es el contenedor de formularios clave y, más adelante, de cada parte de un gasto.
+
+## Do's and Don'ts
+
+### Do:
+- Do usar una participación para el bloque principal de una pantalla de tarea.
+- Do reservar el rojo sello para deuda, errores y acciones destructivas.
+- Do mostrar carga (esqueleto), vacío (qué hacer) y error (con Reintentar) en cada pantalla.
+- Do mantener zonas táctiles ≥44 px e inputs ≥16 px.
+
+### Don't:
+- Don't usar la condensada en etiquetas, botones o cifras.
+- Don't añadir texturas de papel, guilloches ni sellos falsos: el mundo entra por color, tipo y troquel.
+- Don't usar fondos crema ni acentos neón.
+- Don't poner antetítulos (kickers) sobre los títulos.
