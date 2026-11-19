@@ -5,6 +5,7 @@ import { forwardRef, useId, useState, type ButtonHTMLAttributes, type InputHTMLA
 import { Link, useNavigate } from 'react-router'
 import { ChevronLeft, Eye, EyeOff, LoaderCircle } from 'lucide-react'
 import { es } from '../i18n/es'
+import { PwaBanners } from '../pwa/PwaBanners'
 
 /** Barra superior verde con el nombre de la app; respeta el notch (safe-area). */
 export function TopBar({ back, children }: { back?: string; children?: ReactNode }) {
@@ -25,6 +26,7 @@ export function TopBar({ back, children }: { back?: string; children?: ReactNode
           <div className="ml-auto">{children}</div>
         </div>
       </header>
+      <PwaBanners />
     </>
   )
 }
