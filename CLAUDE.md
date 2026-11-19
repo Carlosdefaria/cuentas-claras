@@ -84,6 +84,13 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
   - `.env.test.local` → rama `test`. Los tests de BD leen **solo** este fichero.
   - `.neon` queda fijado en `production`; no cambiar con `neon checkout` sin `--no-env-pull`.
 
+## Antes de tocar production
+- **No se aplica ninguna migración en production tal cual.** Antes, las migraciones 0001–0004 se consolidarán en
+  una **línea base limpia** (sin el intento fallido 0003 y con el parche de `current_user_id()` ya integrado),
+  que se probará en una **rama nueva creada desde production** (`npm run test:db` completo, incluido el test en
+  frío) y cuyo esquema se comparará con el de `test` (`neon branches schema-diff` o equivalente) antes de aplicarla.
+- Production no se toca (ni `neon deploy`, ni migraciones, ni dominios de Auth) sin autorización explícita.
+
 ## Riesgos conocidos
 - **Rendimiento de RLS en `expense_shares`** (migración 0002 aplazada): con 50 miembros, 5.000 gastos y
   127.125 cuotas, leer las cuotas de un grupo tarda **~179 ms con RLS** (44 ms sin RLS; límite PRD 200 ms).
