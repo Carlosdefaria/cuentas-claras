@@ -23,6 +23,31 @@ Se construye por fases (PRD §11). Plan de trabajo: Fase 1 = auth, grupos, gasto
 - Simplificación de deudas (Fase 2): voraz, mayor deudor ↔ mayor acreedor, ≤ n−1 pagos.
 - Borrado de gastos = soft delete (`deleted_at`).
 
+## UI y PWA
+### Producto
+- Se usa como app real: **PWA instalable** en la pantalla de inicio del móvil, en modo `standalone`.
+- Mobile-first: pantalla estrecha, uso con una mano, zonas táctiles de **≥ 44 px**.
+- Interfaz en español; euros con **números tabulares** (`font-variant-numeric: tabular-nums`, `tabular-nums` en Tailwind).
+- Cada pantalla tiene estados de **carga, vacío y error**.
+
+### Navegación
+- Barra inferior para las secciones principales y **botón de volver siempre visible** (iOS standalone no tiene gesto de volver).
+- Respetar safe-area con `env(safe-area-inset-*)` y `viewport-fit=cover`.
+- Inputs con fuente **≥ 16 px** (evita el zoom automático de iOS). No desactivar el zoom del navegador.
+
+### PWA (adaptado a Vite: no hay `app/manifest.ts` de Next.js)
+- Manifest con `display: standalone`, `name`, `short_name`, `theme_color`, `background_color`.
+- Iconos 192×192 y 512×512, uno `maskable` (Android) y `apple-touch-icon` (iOS).
+- Service worker con **Serwist** (plugin de Vite). Sin él, Android no ofrece instalar.
+- `<meta name="theme-color">` y metas de Apple (`apple-mobile-web-app-capable`, título, estilo de barra).
+- iOS no tiene `beforeinstallprompt`: mostrar ayuda "Compartir → Añadir a pantalla de inicio".
+- Probar la instalación en móviles reales (iOS y Android), no solo en escritorio.
+
+### Skills de diseño
+- `impeccable`: base de diseño. `/impeccable init` al empezar (con el PRD como contexto); `polish` y `critique` al terminar cada pantalla.
+- `web-design-guidelines`: solo como auditoría antes de cada merge.
+- No cargar otras skills de diseño a la vez.
+
 ## Alcance del MVP
 Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin pedirlo
 (login social, multidivisa, recurrentes, OCR, pagos integrados, invitados sin cuenta, push, exportar).
