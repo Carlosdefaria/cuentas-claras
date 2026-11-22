@@ -9,13 +9,24 @@ import { listMyGroups, type GroupSummary } from '../../lib/groups'
 import { dataErrorMessage } from '../../lib/dataErrors'
 import { initialOf, talonFor } from '../../lib/talon'
 import { useAsync } from '../../lib/useAsync'
+import { myBalancesByGroup } from '../../lib/expenses'
+import { useSession } from '../../auth/session'
+import { formatCents } from '../../domain/money'
+import { balanceKind, totalBalance } from '../../domain/balanceText'
 import { LoadError, SectionTitle } from '../../components/ui'
 import { TALON_BG } from '../../components/talonBg'
 
 const T = es.groups
 
 export function Groups() {
-  const groups = useAsync(() => listMyGroups(db), [])
+  const { state } = useSession()
+  const me = state.status === 'signed-in' ? state.user.id : ''
+  // Grupos y mi saldo en cada uno (calculado con computeBalances), siempre desde la red.
+  const groups = useAsync(async () => {
+    const list = await listMyGroups(db)
+    const balances = await myBalancesByGroup(db, me, list.map((g) => g.id))
+    return list.map((g) => ({ ...g, balance: balances.get(g.id) ?? 0 }))
+  }, [me])
 
   return (
     <>
@@ -39,6 +50,7 @@ export function Groups() {
       </div>
 
       <h2 className="mt-7 text-[0.9375rem] font-semibold">{T.yourGroups}</h2>
+      {groups.status === 'ready' && groups.data.length > 0 && <TotalLine cents={totalBalance(groups.data.map((g) => g.balance))} />}
       {groups.status === 'loading' && <GroupsSkeleton />}
       {groups.status === 'error' && <LoadError title={T.loadError} message={dataErrorMessage(groups.error)} onRetry={groups.reload} />}
       {groups.status === 'ready' && groups.data.length === 0 && (
@@ -52,7 +64,19 @@ export function Groups() {
   )
 }
 
-function GroupList({ groups }: { groups: GroupSummary[] }) {
+const B = es.expenses.balances
+const TONE = { owed: 'text-favor', owes: 'text-sello', settled: 'text-tinta-suave' } as const
+
+function TotalLine({ cents }: { cents: number }) {
+  const kind = balanceKind(cents)
+  return (
+    <p className={`mt-1 font-semibold tabular-nums ${TONE[kind]}`}>
+      {kind === 'owed' ? B.total.owed(formatCents(cents)) : kind === 'owes' ? B.total.owes(formatCents(-cents)) : B.total.settled}
+    </p>
+  )
+}
+
+function GroupList({ groups }: { groups: (GroupSummary & { balance: number })[] }) {
   return (
     <ul className="mt-3 divide-y divide-papel-hondo rounded-xl bg-hoja shadow-[0_1px_2px_rgb(19_38_29/0.08)]">
       {groups.map((g) => (
@@ -70,6 +94,13 @@ function GroupList({ groups }: { groups: GroupSummary[] }) {
             <span className="min-w-0 flex-1">
               <span className="block break-words font-semibold leading-snug">{g.name}</span>
               <span className="block text-sm text-tinta-suave">{T.members(g.memberCount)}</span>
+            </span>
+            <span className={`flex-none text-right text-sm font-semibold tabular-nums ${TONE[balanceKind(g.balance)]}`}>
+              {balanceKind(g.balance) === 'owed'
+                ? B.row.owed(formatCents(g.balance))
+                : balanceKind(g.balance) === 'owes'
+                  ? B.row.owes(formatCents(-g.balance))
+                  : B.row.settled}
             </span>
             <ChevronRight aria-hidden className="size-5 flex-none text-tinta-tenue" />
           </Link>
