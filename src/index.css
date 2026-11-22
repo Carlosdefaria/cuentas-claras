@@ -37,6 +37,30 @@
   html {
     -webkit-text-size-adjust: 100%;
     background: var(--color-loteria);
+    /* Al enfocar o saltar a un ancla, que la barra inferior fija no tape el destino. */
+    scroll-padding-bottom: calc(3.5rem + env(safe-area-inset-bottom) + 1rem);
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  /* Sin el retardo del doble toque en los controles (el zoom con dos dedos sigue permitido). */
+  a,
+  button,
+  input,
+  label,
+  select,
+  textarea,
+  summary {
+    touch-action: manipulation;
+  }
+
+  /* Destino del enlace «Saltar al contenido»: recibe el foco sin dibujar el anillo. */
+  main:focus {
+    outline: none;
   }
 
   body {

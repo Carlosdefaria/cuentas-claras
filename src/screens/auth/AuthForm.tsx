@@ -8,6 +8,7 @@ import { authErrorMessage } from '../../lib/authErrors'
 import { safeRedirect } from '../../lib/safeRedirect'
 import { es } from '../../i18n/es'
 import { Alert, Button, Field, Participacion, TextLink, TopBar } from '../../components/ui'
+import { InstallHelp } from '../../pwa/InstallHelp'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const T = es.auth
@@ -66,8 +67,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
   return (
     <div className="flex min-h-dvh flex-col">
       <TopBar back={isSignUp ? `/entrar${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}` : undefined} />
-      <main className="mx-auto w-full max-w-md flex-1 px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-8">
+      <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-md flex-1 px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-8">
         {redirectTo && !isSignUp && <p className="mb-4 text-center text-tinta-suave">{T.signIn.redirected}</p>}
+        <InstallHelp context="acceso" className="mb-6" />
         <Participacion title={copy.title} tint={isSignUp ? 'cielo' : 'salmon'}>
           <form noValidate onSubmit={onSubmit} className="flex flex-col gap-5">
             {serverError && <Alert>{serverError}</Alert>}

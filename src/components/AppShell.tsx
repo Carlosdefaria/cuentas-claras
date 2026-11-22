@@ -14,7 +14,7 @@ export function AppShell() {
   return (
     <div className="flex min-h-dvh flex-col">
       <TopBar />
-      <main className="mx-auto w-full max-w-md flex-1 px-4 pb-[calc(5rem+env(safe-area-inset-bottom))] pt-6">
+      <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-md flex-1 px-4 pb-[calc(5rem+env(safe-area-inset-bottom))] pt-6">
         <Outlet />
       </main>
       <nav

@@ -12,8 +12,10 @@ npm install
 npm run dev      # https://localhost:5173 (HTTPS local; proxy /api/auth → Neon Auth de la rama test)
 npm test         # tests de dominio y del proxy (sin red)
 npm run test:db  # tests de RLS/RPC contra la rama test de Neon (requiere .env.test.local)
+npm run test:e2e # Playwright (WebKit iPhone + Chromium Android): login y PWA (manifest, service worker, sin conexión)
 npm run build
 npm run lint
+npm run icons    # regenera los PNG del icono desde design/icon/*.svg
 ```
 
 Variables: ver [`.env.example`](.env.example). Los ficheros `.env*` reales nunca se suben al repo.

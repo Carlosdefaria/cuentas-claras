@@ -7,6 +7,7 @@ export const es = {
     back: 'Volver',
     retry: 'Reintentar',
     loading: 'Cargando…',
+    skipToContent: 'Saltar al contenido',
   },
   auth: {
     signIn: {
@@ -54,6 +55,25 @@ export const es = {
     session: {
       checking: 'Comprobando tu sesión…',
       errorTitle: 'No hemos podido comprobar tu sesión',
+    },
+  },
+  pwa: {
+    offlineTitle: 'Sin conexión.',
+    offlineBody: 'Cuando vuelva, podrás seguir.',
+    updateReady: 'Hay una versión nueva.',
+    update: 'Actualizar',
+    updating: 'Actualizando…',
+    install: {
+      titleBefore: 'Instala ',
+      titleAfter: (device: 'iPhone' | 'iPad') => ` en tu ${device}`,
+      titleShort: (device: 'iPhone' | 'iPad') => `Instálala en tu ${device}`,
+      bodyAccess: 'Mejor antes de entrar: la app instalada no comparte la sesión con Safari.',
+      bodyAccount: 'La tendrás a mano en la pantalla de inicio, a pantalla completa.',
+      step1: 'Toca Compartir',
+      step1Hint: '(o en el menú ···)',
+      step2: 'Elige «Añadir a pantalla de inicio»',
+      step3Account: 'Abre Cuentas Claras desde el icono y vuelve a entrar: la app instalada no comparte la sesión con Safari.',
+      dismiss: 'Ocultar la ayuda para instalar',
     },
   },
   nav: {

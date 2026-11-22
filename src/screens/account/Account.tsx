@@ -6,6 +6,7 @@ import { useSession } from '../../auth/session'
 import { authErrorMessage } from '../../lib/authErrors'
 import { es } from '../../i18n/es'
 import { Alert, Button } from '../../components/ui'
+import { InstallHelp } from '../../pwa/InstallHelp'
 
 const T = es.account
 
@@ -25,6 +26,7 @@ export function Account() {
         <p className="mt-1 text-lg font-semibold break-words">{user.name}</p>
         <p className="text-tinta-suave break-all">{user.email}</p>
       </section>
+      <InstallHelp context="cuenta" className="mt-4" />
       <div className="mt-6 flex flex-col gap-3">
         {error && <Alert>{error}</Alert>}
         <Button

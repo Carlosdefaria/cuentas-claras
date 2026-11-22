@@ -5,19 +5,29 @@ import { forwardRef, useId, useState, type ButtonHTMLAttributes, type InputHTMLA
 import { Link, useNavigate } from 'react-router'
 import { ChevronLeft, Eye, EyeOff, LoaderCircle } from 'lucide-react'
 import { es } from '../i18n/es'
+import { PwaBanners } from '../pwa/PwaBanners'
 
 /** Barra superior verde con el nombre de la app; respeta el notch (safe-area). */
 export function TopBar({ back, children }: { back?: string; children?: ReactNode }) {
   return (
-    <header className="bg-loteria text-white pt-[env(safe-area-inset-top)]">
-      <div className="mx-auto flex h-14 max-w-md items-center gap-1 px-2">
-        {back ? <BackButton to={back} /> : <span className="w-2" aria-hidden />}
-        <p className="font-rotulo text-[1.375rem] font-bold uppercase leading-none tracking-[0.04em]">
-          {es.appName}
-        </p>
-        <div className="ml-auto">{children}</div>
-      </div>
-    </header>
+    <>
+      <a
+        href="#contenido"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-[calc(env(safe-area-inset-top)+0.5rem)] focus:z-50 focus:inline-flex focus:min-h-11 focus:items-center focus:rounded-lg focus:bg-hoja focus:px-4 focus:font-semibold focus:text-loteria focus:shadow-[0_1px_2px_rgb(19_38_29/0.08),0_8px_24px_-12px_rgb(19_38_29/0.25)]"
+      >
+        {es.common.skipToContent}
+      </a>
+      <header className="bg-loteria text-white pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex h-14 max-w-md items-center gap-1 px-2">
+          {back ? <BackButton to={back} /> : <span className="w-2" aria-hidden />}
+          <p translate="no" className="font-rotulo text-[1.375rem] font-bold uppercase leading-none tracking-[0.04em]">
+            {es.appName}
+          </p>
+          <div className="ml-auto">{children}</div>
+        </div>
+      </header>
+      <PwaBanners />
+    </>
   )
 }
 

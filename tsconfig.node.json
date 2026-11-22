@@ -19,5 +19,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts", "vitest.db.config.ts", "scripts/**/*.ts", "db/**/*.ts", "server/**/*.ts", "api/**/*.ts", "e2e/**/*.ts", "playwright.config.ts"]
+  "include": ["vite.config.ts", "vitest.db.config.ts", "scripts/**/*.ts", "db/**/*.ts", "server/**/*.ts", "build/**/*.ts", "api/**/*.ts", "e2e/**/*.ts", "playwright.config.ts"]
 }
