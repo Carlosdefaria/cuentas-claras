@@ -2,7 +2,7 @@
 // En Entrar/Registro se puede descartar; en Cuenta queda siempre disponible mientras no esté instalada.
 
 import { useState } from 'react'
-import { Share, SquarePlus, X } from 'lucide-react'
+import { Ellipsis, Share, SquarePlus, X } from 'lucide-react'
 import { es } from '../i18n/es'
 import { currentInstallEnv, iosInstallDevice } from './installHelp'
 
@@ -44,7 +44,7 @@ export function InstallHelp({ context, className = '' }: { context: 'acceso' | '
         <p className="mt-0.5 pr-6 text-[0.9375rem] leading-snug text-tinta-suave">{T.bodyAccess}</p>
         <ol className="mt-2.5 flex flex-col gap-1.5 text-[0.9375rem] leading-snug text-tinta">
           <Step n={1} icon={<Share aria-hidden className="size-[1.125rem]" strokeWidth={2} />}>
-            {T.step1} <span className="text-tinta-suave">{T.step1Hint}</span>
+            {T.step1} <span className="text-tinta-suave">{T.step1HintBefore}<Ellipsis aria-label={T.step1HintMenu} role="img" className="mx-0.5 inline size-[1.125rem] align-[-0.2em]" strokeWidth={2} />{T.step1HintAfter}</span>
           </Step>
           <Step n={2} icon={<SquarePlus aria-hidden className="size-[1.125rem]" strokeWidth={2} />}>
             {T.step2}
@@ -75,7 +75,7 @@ export function InstallHelp({ context, className = '' }: { context: 'acceso' | '
       <p className="mt-1 text-[0.9375rem] text-tinta-suave">{T.bodyAccount}</p>
       <ol className="mt-3 flex flex-col gap-2.5 text-[0.9375rem] text-tinta">
         <Step n={1} icon={<Share aria-hidden className="size-[1.125rem]" strokeWidth={2} />}>
-          {T.step1} <span className="text-tinta-suave">{T.step1Hint}</span>
+          {T.step1} <span className="text-tinta-suave">{T.step1HintBefore}<Ellipsis aria-label={T.step1HintMenu} role="img" className="mx-0.5 inline size-[1.125rem] align-[-0.2em]" strokeWidth={2} />{T.step1HintAfter}</span>
         </Step>
         <Step n={2} icon={<SquarePlus aria-hidden className="size-[1.125rem]" strokeWidth={2} />}>
           {T.step2}

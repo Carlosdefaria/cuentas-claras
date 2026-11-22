@@ -32,6 +32,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const passwordRef = useRef<HTMLInputElement>(null)
 
   const isSignUp = mode === 'sign-up'
+  // Con una invitación pendiente no se sugiere instalar todavía: la app instalada empieza en «/» y perdería el enlace.
+  const forInvite = safeRedirect(redirectTo).startsWith('/unirse/')
   const copy = isSignUp ? T.signUp : T.signIn
   const otherHref = `${isSignUp ? '/entrar' : '/registro'}${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`
 
@@ -79,8 +81,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
     <div className="flex min-h-dvh flex-col">
       <TopBar back={isSignUp ? `/entrar${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}` : undefined} />
       <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-md flex-1 px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-8">
-        {redirectTo && !isSignUp && <p className="mb-4 text-center text-tinta-suave">{T.signIn.redirected}</p>}
-        <InstallHelp context="acceso" className="mb-6" />
+        {forInvite ? (
+          <p className="mb-4 text-center text-tinta-suave">{isSignUp ? es.groups.join.signUpForInvite : es.groups.join.signInForInvite}</p>
+        ) : (
+          redirectTo && !isSignUp && <p className="mb-4 text-center text-tinta-suave">{T.signIn.redirected}</p>
+        )}
+        {!forInvite && <InstallHelp context="acceso" className="mb-6" />}
         <Participacion title={copy.title} tint={isSignUp ? 'cielo' : 'salmon'}>
           <form noValidate onSubmit={onSubmit} className="flex flex-col gap-5">
             {serverError && <Alert>{serverError}</Alert>}

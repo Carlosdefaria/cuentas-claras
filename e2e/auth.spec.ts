@@ -147,6 +147,8 @@ test('«Saltar al contenido» aparece con el teclado y lleva el foco al contenid
   // En WebKit, Tab no recorre enlaces salvo que lo active el sistema (Opción+Tab en Safari).
   test.skip(browserName === 'webkit', 'Tab no enfoca enlaces en WebKit por defecto')
   await page.goto('/entrar')
+  // Sin esperar a que la página esté montada, el Tab puede llegar antes que el enlace (fallo intermitente).
+  await expect(page.getByRole('heading', { name: 'Entra en tu cuenta' })).toBeVisible()
   await page.keyboard.press('Tab')
   const skip = page.getByRole('link', { name: 'Saltar al contenido' })
   await expect(skip).toBeFocused()

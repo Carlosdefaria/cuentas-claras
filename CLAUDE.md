@@ -66,6 +66,20 @@ Se construye por fases (PRD §11). Plan de trabajo: Fase 1 = auth, grupos, gasto
 - Icono: fuente en `design/icon/*.svg`; los PNG de `public/` se regeneran con `npm run icons` (no editarlos a mano).
 - Dev en HTTPS (`@vitejs/plugin-basic-ssl`): WebKit/Safari solo guarda cookies `Secure` en contexto seguro.
 
+### Grupos e invitaciones
+- Datos: `src/lib/dataApi.ts` (PostgREST con el JWT de `getSession()`, **solo en memoria** hasta 60 s antes de `exp`;
+  un 401 pide JWT nuevo y reintenta una vez; errores → `DataApiError.kind`, textos en `src/lib/dataErrors.ts`).
+  Instancia en `src/lib/data.ts`; el JWT se olvida al cerrar sesión o cambiar de usuario. Consultas en `src/lib/groups.ts`.
+- La Data API **exige JWT** (sin token: `401 PGRST302`, aunque exista el rol `anonymous`): sin sesión no se puede leer
+  nada, ni siquiera el nombre del grupo de una invitación.
+- Enlace: `https://<origen>/unirse/<invite_code>` (`src/lib/invite.ts`). `/unirse/:code` es pública: sin sesión ofrece
+  registrarse o entrar con `?redirectTo=/unirse/<code>` (sobrevive a registro → verificación → entrar); con sesión,
+  `invite_preview` (migración 0005) y un toque en «Unirme» (`join_group`); si ya es miembro, al grupo.
+- iOS: la app instalada arranca en `/` y no comparte sesión con Safari. Con una invitación pendiente no se muestra la
+  ayuda de instalación en Entrar/Registro; se une en Safari y después se ofrece instalar. En la app, «Unirme con un
+  enlace» (`/unirse`) acepta el enlace o el código pegados. No se guarda el código en almacenamiento local.
+- Los e2e que crean grupos borran **primero los grupos** y luego los usuarios (las FK de `created_by` lo exigen).
+
 ### Prioridad de plataforma
 - **iOS primero** (Safari y PWA instalada). Android, más adelante.
 - Pruebas automáticas de navegador en **WebKit y Chromium**.
@@ -95,7 +109,7 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
   - `.neon` queda fijado en `production`; no cambiar con `neon checkout` sin `--no-env-pull`.
 
 ## Antes de tocar production
-- **No se aplica ninguna migración en production tal cual.** Antes, las migraciones 0001–0004 se consolidarán en
+- **No se aplica ninguna migración en production tal cual.** Antes, las migraciones 0001–0004 (y las posteriores, p. ej. 0005) se consolidarán en
   una **línea base limpia** (sin el intento fallido 0003 y con el parche de `current_user_id()` ya integrado),
   que se probará en una **rama nueva creada desde production** (`npm run test:db` completo, incluido el test en
   frío) y cuyo esquema se comparará con el de `test` (`neon branches schema-diff` o equivalente) antes de aplicarla.
