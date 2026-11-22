@@ -53,6 +53,12 @@ Se construye por fases (PRD §11). Plan de trabajo: Fase 1 = auth, grupos, gasto
 - El SDK lanza excepciones en los errores de Auth (p. ej. `invalid_credentials`): capturarlas en la UI.
 - Verificación de email y recuperación de contraseña **por código (OTP), nunca por enlace**: en iOS la PWA
   instalada no comparte cookies con Safari, y un enlace abriría Safari.
+- Códigos por email: `src/lib/otp.ts` (el SDK registra el plugin email OTP pero no lo tipa). Neon Auth de `test`:
+  `require_email_verification`, envío al registrarse y al entrar sin verificar, `auto_sign_in_after_verification`,
+  `revoke_sessions_on_password_reset` y sin Google OAuth. **Production tendrá que configurarse igual** (con autorización).
+  Pantallas: `/verificar`, `/recuperar`, `/recuperar/codigo` (dos pasos). Registrarse con un email que ya existe no
+  da error (no se revela qué emails existen): lleva a «Confirma tu email» con «¿Ya tenías cuenta…? Entra».
+  En e2e el código se fija con `e2e/otp.ts` (Neon Auth guarda el hash SHA-256 base64url, «hash:intentos»).
 - Serwist: estrategia **solo red** para `/api/auth/*` y la Data API. **Nunca cachear respuestas con datos de usuario.**
   Implementado en `src/sw/` (`routes.ts` puro con tests; `sw.ts` con su `tsconfig.sw.json`): precaché solo del armazón
   del build, navegaciones con `index.html` precacheado (excepto `/api`), y versión nueva tras pulsar «Actualizar»
@@ -110,6 +116,13 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
   Cubierto por `db/tests/currentUserId.test.ts` y `db/tests/coldStart.test.ts` (suspende la rama `test`;
   `NEON_API_KEY=proxy-injected npm run test:db`). **Retirar (migración nueva que vuelva a `auth.uid()`) cuando
   Neon lo corrija**, y comprobar antes con `coldStart.test.ts` sin el parche.
+
+- **Límite de peticiones de Neon Auth detrás del proxy.** Neon Auth devuelve 429 en los endpoints de código si hay
+  muchas peticiones seguidas (la suite e2e completa lo alcanza; 8 seguidas no, así que el umbral exacto no se ha
+  medido). `handleAuthProxyRequest` del SDK **no reenvía la IP del cliente** (`X-Forwarded-For`): si el límite es
+  por IP, en Vercel todos los usuarios compartirían la de la función. Con grupos pequeños es poco probable, pero
+  varios invitados registrándose a la vez podrían ver «Demasiados intentos». Revisar con Neon antes de production.
+  Los e2e lo esquivan esperando la ventana (`retryIfRateLimited`).
 
 ## Tests
 - La lógica de dominio (`src/domain/`: `money.ts`, `split.ts`, `balances.ts`; después la simplificación) son funciones puras con tests Vitest (`*.test.ts` al lado).
