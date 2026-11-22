@@ -40,7 +40,8 @@ export function InviteSheet({
       setCopy('idle')
       dialog.showModal()
       // showModal() enfoca el primer control (la ✕): el foco inicial va a la acción principal.
-      primaryRef.current?.focus()
+      // focusVisible: false → sin anillo tras un toque; con teclado el navegador lo sigue mostrando.
+      primaryRef.current?.focus({ focusVisible: false } as FocusOptions)
     } else if (!open && dialog.open) dialog.close()
   }, [open])
 
