@@ -53,10 +53,14 @@ Apunta en cada prueba: modelo de iPhone, versión de iOS, dónde (Safari o app i
 - [ ] Cerrar sesión → pantalla de entrada. Reabrir la app → sigue sin sesión.
 
 ### Verificación de email y recuperación de contraseña (por código)
-- [ ] Al registrarse llega un email con un **código** (no un enlace).
+- [ ] Al registrarse llega un email con un **código** (no un enlace) y la app muestra «Confirma tu email».
+- [ ] Anotar el remitente, el idioma y el aspecto del email (hoy lo envía el remitente compartido de Neon Auth).
+- [ ] Entrar con una cuenta sin confirmar lleva a «Confirma tu email» y llega un código nuevo.
+- [ ] «Reenviar código» espera 1:00 y después envía otro.
 - [ ] Al escribir el código en la app, el teclado es numérico y iOS **sugiere el código** encima del teclado.
-- [ ] Recuperar contraseña: llega un código, se introduce en la app y se entra con la nueva contraseña,
-      **sin salir de la app**.
+- [ ] Recuperar contraseña («¿Has olvidado tu contraseña?» en Entrar): paso 1 el código, paso 2 la contraseña
+      nueva, y se entra directamente, **sin salir de la app**. iOS ofrece guardar la contraseña nueva.
+- [ ] Tras recuperarla, en otro dispositivo con la sesión abierta, la sesión se ha cerrado.
 - [ ] Si se abre el email en Mail, ningún enlace saca al usuario de la app para completar el proceso.
 
 ## 4. Navegación y diseño (app instalada)

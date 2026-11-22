@@ -3,6 +3,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { authClient, fetchSession, type SessionUser } from '../lib/auth'
+import { verifyEmail as verifyEmailCode } from '../lib/otp'
 
 export type SessionState =
   | { status: 'checking' }
@@ -14,7 +15,10 @@ interface SessionApi {
   state: SessionState
   refresh: () => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
-  signUp: (name: string, email: string, password: string) => Promise<void>
+  /** 'verify' si la cuenta queda pendiente de confirmar el email (el servidor ha enviado el código). */
+  signUp: (name: string, email: string, password: string) => Promise<'signed-in' | 'verify'>
+  /** Confirma el email con el código; el servidor abre la sesión. */
+  verifyEmail: (email: string, code: string) => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -23,14 +27,19 @@ const SessionContext = createContext<SessionApi | null>(null)
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<SessionState>({ status: 'checking' })
 
+  const load = useCallback(async (): Promise<SessionUser | null> => {
+    const { user } = await fetchSession()
+    setState(user ? { status: 'signed-in', user } : { status: 'signed-out' })
+    return user
+  }, [])
+
   const refresh = useCallback(async () => {
     try {
-      const { user } = await fetchSession()
-      setState(user ? { status: 'signed-in', user } : { status: 'signed-out' })
+      await load()
     } catch (error) {
       setState((prev) => (prev.status === 'signed-in' ? prev : { status: 'error', error }))
     }
-  }, [])
+  }, [load])
 
   useEffect(() => {
     void refresh()
@@ -52,6 +61,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       },
       signUp: async (name, email, password) => {
         await authClient.signUp.email({ name, email, password })
+        // Con verificación obligatoria el registro no abre sesión: toca escribir el código.
+        return (await load()) ? 'signed-in' : 'verify'
+      },
+      verifyEmail: async (email, code) => {
+        await verifyEmailCode(email, code)
         await refresh()
       },
       signOut: async () => {
@@ -59,7 +73,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setState({ status: 'signed-out', explicit: true })
       },
     }),
-    [state, refresh],
+    [state, refresh, load],
   )
 
   return <SessionContext.Provider value={api}>{children}</SessionContext.Provider>

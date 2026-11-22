@@ -15,9 +15,10 @@ async function serwist() {
 }
 
 export async function registerServiceWorker(): Promise<void> {
-  if (!('serviceWorker' in navigator)) return
+  // En `npm run dev` no hay sw.js (Serwist desactivado): registrar daría «MIME type» y un rechazo sin capturar.
+  if (import.meta.env.DEV || !('serviceWorker' in navigator)) return
   const sw = await serwist()
-  if (!sw) return // desactivado en `npm run dev`
+  if (!sw) return
   sw.addEventListener('waiting', () => {
     updateReady = true
     emit()

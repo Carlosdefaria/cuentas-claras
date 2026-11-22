@@ -2,15 +2,15 @@
 // los errores del servidor se traducen con authErrorMessage.
 
 import { useRef, useState, type FormEvent } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { useSession } from '../../auth/session'
-import { authErrorMessage } from '../../lib/authErrors'
+import { authErrorMessage, isEmailNotVerified } from '../../lib/authErrors'
+import { EMAIL_RE } from '../../lib/email'
 import { safeRedirect } from '../../lib/safeRedirect'
 import { es } from '../../i18n/es'
 import { Alert, Button, Field, Participacion, TextLink, TopBar } from '../../components/ui'
 import { InstallHelp } from '../../pwa/InstallHelp'
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const T = es.auth
 
 type Mode = 'sign-in' | 'sign-up'
@@ -20,7 +20,10 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const { signIn, signUp } = useSession()
   const navigate = useNavigate()
   const [params] = useSearchParams()
+  const location = useLocation()
   const redirectTo = params.get('redirectTo')
+  const keep = redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''
+  const initialEmail = (location.state as { email?: string } | null)?.email
   const [errors, setErrors] = useState<Errors>({})
   const [serverError, setServerError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -55,10 +58,18 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
     setSubmitting(true)
     try {
-      if (isSignUp) await signUp(name, email, password)
-      else await signIn(email, password)
+      if (isSignUp && (await signUp(name, email, password)) === 'verify') {
+        navigate(`/verificar${keep}`, { state: { email } })
+        return
+      }
+      if (!isSignUp) await signIn(email, password)
       navigate(safeRedirect(redirectTo), { replace: true })
     } catch (error) {
+      // Cuenta sin confirmar: el servidor acaba de enviar un código nuevo.
+      if (isEmailNotVerified(error)) {
+        navigate(`/verificar${keep}`, { state: { email } })
+        return
+      }
       setServerError(authErrorMessage(error))
       setSubmitting(false)
     }
@@ -92,6 +103,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
               type="email"
               label={T.fields.email}
               error={errors.email}
+              defaultValue={initialEmail}
               autoComplete="email"
               autoCapitalize="none"
               autoCorrect="off"
@@ -109,6 +121,19 @@ export function AuthForm({ mode }: { mode: Mode }) {
               autoComplete={isSignUp ? 'new-password' : 'current-password'}
               enterKeyHint="go"
             />
+            {!isSignUp && (
+              <Link
+                to={`/recuperar${keep}`}
+                onClick={(event) => {
+                  // Lleva el email ya escrito para no teclearlo dos veces.
+                  event.preventDefault()
+                  navigate(`/recuperar${keep}`, { state: { email: emailRef.current?.value.trim() || undefined } })
+                }}
+                className="-mt-3 inline-flex min-h-11 items-center self-start font-semibold text-loteria underline hover:text-loteria-hondo"
+              >
+                {T.forgot.link}
+              </Link>
+            )}
             <Button type="submit" loading={submitting} className="mt-1">
               {submitting ? copy.submitting : copy.submit}
             </Button>

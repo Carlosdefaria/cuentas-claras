@@ -212,6 +212,14 @@ de mostrar/ocultar de 48 px.
 - **Barra inferior** blanca con borde superior: pestañas con icono (lucide, trazo 1.75; 2.25 activo) y
   etiqueta; activa en verde lotería.
 
+### Código de un solo uso (verificación y recuperación)
+Un único campo de 60 px (no seis casillas): cifras de 1.875rem con tracking 0.35em, tabulares y centradas;
+`inputmode="numeric"` y `autocomplete="one-time-code"` (iOS sugiere el código de Mail); al pegar se limpia
+a 6 cifras y al completarlas se envía solo. Talón **menta** en las pantallas de código y **mantequilla** en
+«Recupera tu contraseña». Bajo la participación: «Reenviar código (0:59)» con cuenta atrás y «Cambiar email».
+Recuperar va en **dos pasos** (variante C, elegida por el usuario): «Paso 1 de 2» (código, comprobado al momento)
+y «Paso 2 de 2» con «✓ Código correcto» en verde a favor y la contraseña nueva; al terminar se entra directamente.
+
 ### Avisos de la app
 Franja a ancho completo bajo la barra superior (sin tapar contenido, `aria-live="polite"`):
 - **Sin conexión**: fondo `papel-hondo`, icono `WifiOff` y «Sin conexión. Cuando vuelva, podrás seguir.»

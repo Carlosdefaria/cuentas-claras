@@ -18,7 +18,8 @@ safe-area, español con tú cercano, sin datos de usuario en caché.
 Decisiones abiertas: modo oscuro (de momento claro).
 Decidido: icono de la PWA «Talones en abanico» (variante C de 4, elegida por el usuario); ayuda de instalación
 iOS compacta sobre la participación de Entrar/Registro y completa en Cuenta; avisos de sin conexión y versión
-nueva bajo la barra superior.
+nueva bajo la barra superior. Pantallas de código (verificar email, recuperar contraseña en dos pasos: variante
+C de 3, elegida por el usuario) con un único campo de código, talón menta, y «Recupera tu contraseña» en mantequilla.
 
 ## Direction contract
 

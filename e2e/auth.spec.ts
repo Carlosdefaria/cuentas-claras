@@ -3,6 +3,7 @@
 // rutas protegidas, cierre de sesión y errores. Crea usuarios e2e-*@cuentas-claras.test y los borra al final.
 import { expect, test, type Page } from '@playwright/test'
 import { testSql } from '../scripts/testDb.ts'
+import { markVerified } from './otp.ts'
 
 const PASSWORD = 'Prueba-E2E-1234'
 const created: string[] = []
@@ -21,6 +22,19 @@ async function signUp(page: Page, name: string, email: string) {
   await page.getByRole('button', { name: 'Crear cuenta' }).click()
 }
 
+/**
+ * Registro completo. La verificación por código se prueba en recovery.spec.ts; aquí la cuenta se marca como
+ * confirmada en la BD de test y se entra con la contraseña (no gasta el límite de los endpoints de código).
+ */
+async function signUpVerified(page: Page, name: string, email: string) {
+  await signUp(page, name, email)
+  await expect(page.getByRole('heading', { name: 'Confirma tu email' })).toBeVisible()
+  await markVerified(email)
+  await page.getByRole('link', { name: 'Entra', exact: true }).click()
+  await page.getByLabel('Contraseña', { exact: true }).fill(PASSWORD)
+  await page.getByRole('button', { name: 'Entrar' }).click()
+}
+
 test.afterAll(async () => {
   if (created.length === 0) return
   const sql = testSql()
@@ -29,7 +43,7 @@ test.afterAll(async () => {
 
 test('registro → Grupos; la sesión sobrevive a recargar y a una pestaña nueva; cerrar sesión', async ({ page, context }, info) => {
   const email = newEmail(info.project.name)
-  await signUp(page, 'Ana Prueba', email)
+  await signUpVerified(page, 'Ana Prueba', email)
 
   await expect(page).toHaveURL('/')
   await expect(page.getByRole('heading', { name: 'Grupos', exact: true })).toBeVisible()
@@ -57,7 +71,7 @@ test('registro → Grupos; la sesión sobrevive a recargar y a una pestaña nuev
 
 test('ruta protegida sin sesión → entrar y volver al destino', async ({ page }, info) => {
   const email = newEmail(info.project.name)
-  await signUp(page, 'Bea Prueba', email)
+  await signUpVerified(page, 'Bea Prueba', email)
   await expect(page).toHaveURL('/')
   await page.getByRole('link', { name: 'Cuenta' }).click()
   await page.getByRole('button', { name: 'Cerrar sesión' }).click()
@@ -73,9 +87,9 @@ test('ruta protegida sin sesión → entrar y volver al destino', async ({ page 
   await expect(page.getByText(email)).toBeVisible()
 })
 
-test('contraseña incorrecta y cuenta ya existente muestran mensajes claros', async ({ page }, info) => {
+test('contraseña incorrecta: mensaje claro; registro con un email existente: no lo revela y ofrece entrar', async ({ page }, info) => {
   const email = newEmail(info.project.name)
-  await signUp(page, 'Carla Prueba', email)
+  await signUpVerified(page, 'Carla Prueba', email)
   await expect(page).toHaveURL('/')
   await page.getByRole('link', { name: 'Cuenta' }).click()
   await page.getByRole('button', { name: 'Cerrar sesión' }).click()
@@ -86,8 +100,13 @@ test('contraseña incorrecta y cuenta ya existente muestran mensajes claros', as
   await expect(page.getByRole('alert')).toHaveText('Email o contraseña incorrectos.')
   await expect(page).toHaveURL('/entrar')
 
+  // Registrarse otra vez con el mismo email no revela que existe: lleva a confirmar el email,
+  // con la salida «¿Ya tenías cuenta…? Entra» (que conserva el email).
   await signUp(page, 'Carla Otra', email)
-  await expect(page.getByRole('alert')).toHaveText('Ya hay una cuenta con ese email. Prueba a entrar.')
+  await expect(page.getByRole('heading', { name: 'Confirma tu email' })).toBeVisible()
+  await page.getByRole('link', { name: 'Entra', exact: true }).click()
+  await expect(page).toHaveURL('/entrar')
+  await expect(page.getByLabel('Email')).toHaveValue(email)
 })
 
 test('validación en cliente sin llamar al servidor', async ({ page }) => {
