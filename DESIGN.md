@@ -33,6 +33,12 @@ typography:
     fontWeight: 700
     lineHeight: 1
     letterSpacing: "0.01em"
+  rotulo-hoja:
+    fontFamily: "Barlow Condensed, system-ui, sans-serif"
+    fontSize: "1.5rem"
+    fontWeight: 700
+    lineHeight: 1.05
+    letterSpacing: "0.01em"
   rotulo-marca:
     fontFamily: "Barlow Condensed, system-ui, sans-serif"
     fontSize: "1.375rem"
@@ -164,7 +170,8 @@ participación y título de sección. Escala fija en rem; inputs a ≥16 px para
 ### Hierarchy
 - **Marca** (`rotulo-marca`): 1.375rem / 700 / mayúsculas / tracking 0.04em, blanco sobre verde lotería.
 - **Título de sección** (`rotulo-seccion`): 2rem / 700 / mayúsculas.
-- **Título de participación** (`rotulo-titulo`): 1.875rem / 700 / mayúsculas.
+- **Título de participación** (`rotulo-titulo`): 1.875rem / 700 / mayúsculas. En una hoja inferior, compacta
+  (`rotulo-hoja`): 1.5rem.
 - **Cuerpo** (`body`): 1rem / 1.5. **Etiqueta** (`label`): 0.9375rem / 600. **Pequeño** (`small`): 0.875rem.
 
 ### Named Rules
@@ -239,6 +246,26 @@ Tarjeta plana (`hoja`, 12 px) solo en iOS sin instalar (no en navegadores dentro
 con troquel y muescas reales, y «CC» en Barlow Condensed en la del frente. Fuente en `design/icon/*.svg`;
 los PNG (192, 512, maskable 512 con el motivo en el 80 % central, `apple-touch-icon` 180 opaco) se generan con
 `npm run icons`. El favicon (`public/favicon.svg`) es el mismo abanico sin texto.
+
+### Grupos (variante C de 3, elegida por el usuario: «Acción primero, hoja inferior»)
+- **Acciones de inicio**: dos baldosas de 88 px a dos columnas bajo el título «Grupos»: «Nuevo grupo» en verde
+  lotería (icono `Plus`) y «Unirme con un enlace» en `hoja` con sombra plana (icono `Link2`). Son enlaces.
+- **Lista de grupos**: tarjeta plana con filas de ≥64 px separadas por `papel-hondo`; cada fila lleva una marca de
+  40 px (radio 8 px) en el talón del grupo (estable por id) con la inicial en condensada, nombre (600), «n miembros»
+  y chevron. Vacío: caja discontinua; carga: esqueleto de tres filas; error: tarjeta con Reintentar.
+- **Detalle**: nombre en condensada 2rem, «n miembros · Euro (€)» y botón «Invitar» (44 px, verde lotería,
+  `UserPlus`); control segmentado Gastos · Saldos · Miembros (`papel-hondo`, pestaña activa en `hoja`, 44 px, flechas
+  del teclado). Miembros: filas con círculo de 36 px en el talón de su orden de llegada (nunca dos seguidos iguales),
+  «Tú» y «Administra» a la derecha.
+- **Hoja inferior** (`<dialog>` modal): fondo `hoja`, radio 16 px arriba, asa decorativa y ✕ de 44 px; sube con un
+  ease-out exponencial de 280 ms sobre un velo de tinta al 38 %. «Invitar» lleva una participación compacta en menta
+  («Invita a <grupo>», enlace en un campo de solo lectura) y «Compartir enlace» (hoja nativa, solo si existe) sobre
+  «Copiar enlace»; el aviso «Enlace copiado.» va en verde a favor con `aria-live`.
+- **Invitación** (`/unirse/:code`): sin sesión, participación menta «Te han invitado» con «Crear cuenta y unirme» y
+  «Ya tengo cuenta: entrar»; con sesión, título «Invitación», tarjeta plana con la marca del grupo (56 px), nombre y
+  miembros, y «Unirme al grupo» + «Ahora no». Al unirse, franja `loteria-claro` «Ya estás en «…».».
+- **Nuevo grupo** y **Unirme con un enlace**: participación (mantequilla y menta) con un campo y el botón principal;
+  la moneda se muestra como texto fijo sobre `papel`.
 
 ### Participación (componente propio)
 Talón superior en papel de color con el título en condensada, línea troquelada con muescas y cuerpo en

@@ -1,9 +1,10 @@
 // Estado de sesión de la app: comprobando, con sesión, sin sesión o error (sin red / servicio caído).
 // Se vuelve a comprobar al volver la app a primer plano (PWA en iOS: reabrir la app no recarga la página).
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { authClient, fetchSession, type SessionUser } from '../lib/auth'
 import { verifyEmail as verifyEmailCode } from '../lib/otp'
+import { sessionJwt } from '../lib/data'
 
 export type SessionState =
   | { status: 'checking' }
@@ -26,9 +27,13 @@ const SessionContext = createContext<SessionApi | null>(null)
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<SessionState>({ status: 'checking' })
+  const userIdRef = useRef<string | null>(null)
 
   const load = useCallback(async (): Promise<SessionUser | null> => {
     const { user } = await fetchSession()
+    // El JWT de la Data API vive solo en memoria: se olvida si no hay sesión o cambia el usuario.
+    if (!user || (userIdRef.current && userIdRef.current !== user.id)) sessionJwt.clear()
+    userIdRef.current = user?.id ?? null
     setState(user ? { status: 'signed-in', user } : { status: 'signed-out' })
     return user
   }, [])
@@ -70,6 +75,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       },
       signOut: async () => {
         await authClient.signOut()
+        sessionJwt.clear()
         setState({ status: 'signed-out', explicit: true })
       },
     }),

@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router'
 import { ChevronLeft, Eye, EyeOff, LoaderCircle } from 'lucide-react'
 import { es } from '../i18n/es'
 import { PwaBanners } from '../pwa/PwaBanners'
+import { TALON_BG } from './talonBg'
 
 /** Barra superior verde con el nombre de la app; respeta el notch (safe-area). */
 export function TopBar({ back, children }: { back?: string; children?: ReactNode }) {
@@ -53,28 +54,33 @@ export function BackButton({ to }: { to: string }) {
 export function Participacion({
   title,
   tint = 'salmon',
+  level = 1,
+  compact = false,
+  className = '',
   children,
 }: {
   title: ReactNode
   tint?: 'salmon' | 'menta' | 'cielo' | 'mantequilla' | 'lila'
+  /** Nivel del título (h1 en las pantallas de tarea; h2 dentro de una hoja). */
+  level?: 1 | 2
+  /** Versión compacta (hojas inferiores). */
+  compact?: boolean
+  className?: string
   children: ReactNode
 }) {
-  const talon = {
-    salmon: 'bg-talon-salmon',
-    menta: 'bg-talon-menta',
-    cielo: 'bg-talon-cielo',
-    mantequilla: 'bg-talon-mantequilla',
-    lila: 'bg-talon-lila',
-  }[tint]
+  const talon = TALON_BG[tint]
+  const Heading = level === 1 ? 'h1' : 'h2'
   return (
-    <section className="rounded-xl bg-hoja shadow-[0_1px_2px_rgb(19_38_29/0.08),0_8px_24px_-12px_rgb(19_38_29/0.25)]">
-      <div className={`${talon} rounded-t-xl px-5 pb-3 pt-5`}>
-        <h1 className="font-rotulo text-[1.875rem] font-bold uppercase leading-[1.05] tracking-[0.01em] text-tinta">
+    <section className={`rounded-xl bg-hoja ${compact ? 'border border-papel-hondo' : 'shadow-[0_1px_2px_rgb(19_38_29/0.08),0_8px_24px_-12px_rgb(19_38_29/0.25)]'} ${className}`}>
+      <div className={`${talon} rounded-t-xl ${compact ? 'px-4 pb-2 pt-4' : 'px-5 pb-3 pt-5'}`}>
+        <Heading
+          className={`break-words font-rotulo font-bold uppercase leading-[1.05] tracking-[0.01em] text-tinta ${compact ? 'text-[1.5rem]' : 'text-[1.875rem]'}`}
+        >
           {title}
-        </h1>
+        </Heading>
       </div>
       <div className={`troquel ${talon}`} style={{ backgroundImage: 'linear-gradient(to bottom, transparent 50%, var(--color-hoja) 50%)' }} aria-hidden />
-      <div className="rounded-b-xl px-5 pb-6 pt-3">{children}</div>
+      <div className={`rounded-b-xl ${compact ? 'px-4 pb-4 pt-1' : 'px-5 pb-6 pt-3'}`}>{children}</div>
     </section>
   )
 }
@@ -165,6 +171,37 @@ export function Alert({ children }: { children: ReactNode }) {
 export function TextLink({ to, children }: { to: string; children: ReactNode }) {
   return (
     <Link to={to} className="inline-flex min-h-11 items-center font-semibold text-loteria underline hover:text-loteria-hondo">
+      {children}
+    </Link>
+  )
+}
+
+/** Título de sección en condensada (Grupos, Cuenta, Invitación). */
+export function SectionTitle({ children }: { children: ReactNode }) {
+  return <h1 className="font-rotulo text-[2rem] font-bold uppercase leading-none tracking-[0.01em]">{children}</h1>
+}
+
+/** Error de carga con Reintentar (nunca datos de caché). */
+export function LoadError({ title, message, onRetry }: { title: string; message: string; onRetry: () => void }) {
+  return (
+    <section role="alert" className="mt-6 rounded-xl bg-hoja px-5 py-6 text-center shadow-[0_1px_2px_rgb(19_38_29/0.08)]">
+      <h2 className="text-lg font-semibold">{title}</h2>
+      <p className="mx-auto mt-1 max-w-[34ch] text-tinta-suave">{message}</p>
+      <div className="mx-auto mt-5 max-w-xs">
+        <Button onClick={onRetry}>{es.common.retry}</Button>
+      </div>
+    </section>
+  )
+}
+
+/** Enlace con aspecto de botón (navegación, no acción). */
+export function ButtonLink({ to, tone = 'primario', children, className = '' }: { to: string; tone?: 'primario' | 'secundario'; children: ReactNode; className?: string }) {
+  const tones = {
+    primario: 'bg-loteria text-white hover:bg-loteria-hondo active:bg-loteria-hondo',
+    secundario: 'border border-trazo bg-white text-loteria hover:bg-papel active:bg-papel-hondo',
+  }[tone]
+  return (
+    <Link to={to} className={`inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg px-4 text-base font-semibold transition-colors duration-150 ${tones} ${className}`}>
       {children}
     </Link>
   )

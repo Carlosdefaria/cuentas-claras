@@ -1,0 +1,41 @@
+---
+version: 1
+slug: "src-screens-groups"
+primary_target: "src/screens/groups"
+related_targets: ["src/components/AppShell.tsx"]
+---
+
+# Superficie: grupos (lista, nuevo grupo, detalle con miembros, invitar y unirse)
+
+Modo: Operate. Construcción: code-led (variantes en imagen; el usuario eligió la C de 3).
+Alcance: `/` (Grupos), `/grupos/nuevo`, `/grupos/:id` (detalle, pestañas Gastos · Saldos · Miembros; hoy solo
+Miembros tiene contenido) con la hoja «Invitar», y `/unirse/:code` (pública, con y sin sesión).
+Usuario y tarea: quien organiza crea el grupo y comparte el enlace desde el iPhone; quien lo recibe se registra,
+confirma el email y se une con un toque. Estados: cargando, vacío, error con Reintentar, enlace no válido, ya
+eres miembro, sin conexión.
+Restricciones: controles estándar, ≥44 px, inputs ≥16 px, nada de datos en caché, hoja nativa de compartir
+(`navigator.share`) con «Copiar enlace» de respaldo. La invitación sin sesión no muestra el nombre del grupo
+(la Data API exige JWT). En iOS, unirse en Safari antes de instalar; en la app, «Unirme con un enlace» pegando.
+Decisiones abiertas: saldo por grupo en la lista (llega con los gastos).
+
+## Direction contract
+
+THESIS: La pantalla de grupos es un punto de partida: las dos acciones que mueven el producto (crear y unirse)
+arriba, la lista compacta debajo. Rechaza el tablero de tarjetas decorativas donde la acción queda al fondo.
+
+OWN-WORLD: El del sistema (DESIGN.md): papel verde agua, barra verde lotería, talones de color por grupo y por
+persona, troquel solo en la participación de la hoja «Invitar» y de la invitación. Lista en tarjeta plana con
+filas de 64 px y una tira vertical del talón del grupo.
+
+STORY: Ve sus grupos y sabe qué hacer en un segundo; crea uno, lo comparte con la hoja nativa y los demás
+aparecen como miembros. Quien recibe el enlace se une sin perderse en el registro.
+
+FIRST VIEWPORT: Título «Grupos» en condensada; debajo dos acciones de 88 px a dos columnas (Nuevo grupo en verde
+lotería, Unirme con un enlace en hoja); después «Tus grupos» y la lista. En el detalle: nombre en condensada,
+«n miembros · Euro (€)», control segmentado Gastos · Saldos · Miembros y botón Invitar; la hoja inferior lleva
+una participación menta «Invita a <grupo>» y los botones Compartir enlace / Copiar enlace.
+
+FORM: «Acción primero, hoja inferior», posición 7 de mi lista (repartida por la tirada: 5, 1, 7; el usuario eligió
+la 7). seed:5cc768e3e5ed981f (tirada degradada, sin retadores).
+
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance

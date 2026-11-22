@@ -138,6 +138,37 @@
   }
 }
 
+@layer components {
+  /* Hoja inferior (<dialog> modal): sube desde abajo con un ease-out exponencial; fondo de tinta. */
+  .hoja-inferior {
+    max-height: 100dvh;
+    border: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .hoja-inferior::backdrop {
+    background: rgb(19 38 29 / 0.38);
+  }
+  .hoja-inferior[open] {
+    animation: hoja-sube 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .hoja-inferior[open]::backdrop {
+    animation: hoja-fondo 280ms ease-out;
+  }
+}
+
+@keyframes hoja-sube {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes hoja-fondo {
+  from {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -7,6 +7,10 @@ import { VerifyEmail } from './screens/auth/VerifyEmail'
 import { ForgotPassword } from './screens/auth/ForgotPassword'
 import { ResetPassword } from './screens/auth/ResetPassword'
 import { Groups } from './screens/groups/Groups'
+import { NewGroup } from './screens/groups/NewGroup'
+import { GroupDetail } from './screens/groups/GroupDetail'
+import { JoinGroup } from './screens/groups/JoinGroup'
+import { PasteInvite } from './screens/groups/PasteInvite'
 import { Account } from './screens/account/Account'
 
 const routes = [
@@ -27,11 +31,16 @@ const routes = [
         element: <AppShell />,
         children: [
           { path: '/', element: <Groups /> },
+          { path: '/grupos/nuevo', element: <NewGroup />, handle: { back: '/' } },
+          { path: '/grupos/:id', element: <GroupDetail />, handle: { back: '/' } },
+          { path: '/unirse', element: <PasteInvite />, handle: { back: '/' } },
           { path: '/cuenta', element: <Account /> },
         ],
       },
     ],
   },
+  // Invitación: pública (sin sesión lleva a registrarse o entrar y vuelve aquí).
+  { path: '/unirse/:code', element: <JoinGroup /> },
   { path: '*', element: <Navigate to="/" replace /> },
 ]
 
