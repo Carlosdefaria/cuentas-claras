@@ -55,6 +55,7 @@ export const es = {
       codeExpired: 'El código ha caducado. Pide uno nuevo.',
       codeTooManyAttempts: 'Demasiados intentos con este código. Pide uno nuevo.',
       emailNotVerified: 'Confirma tu email: te hemos enviado un código.',
+      invalidOrigin: 'Esta dirección de la app no está autorizada para entrar. Abre Cuentas Claras desde su dirección habitual o avisa a quien la administra.',
     },
     code: {
       label: 'Código de 6 cifras',

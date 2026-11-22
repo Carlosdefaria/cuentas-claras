@@ -51,6 +51,10 @@ Se construye por fases (PRD §11). Plan de trabajo: Fase 1 = auth, grupos, gasto
 - El cliente de Auth apunta a `${origin}/api/auth`. El JWT para la Data API sale de `getSession()` (`session.token`);
   por eso el proxy pide `get-session` con `disableCookieCache=true` (la caché del SDK responde sin JWT).
 - El SDK lanza excepciones en los errores de Auth (p. ej. `invalid_credentials`): capturarlas en la UI.
+- **Dominios de confianza de Neon Auth:** cada rama nueva tiene otra dirección de Preview en Vercel
+  (`cuentas-claras-git-<rama>-…-sistema-reservas.vercel.app`) y hay que añadirla a los dominios de confianza de Neon Auth
+  de `test` (consola: rama test → Auth → Configuration → Trusted domains). Si no, Neon Auth responde `403 INVALID_ORIGIN`
+  y la app muestra «Esta dirección de la app no está autorizada…». Production tendrá solo su dominio propio.
 - Verificación de email y recuperación de contraseña **por código (OTP), nunca por enlace**: en iOS la PWA
   instalada no comparte cookies con Safari, y un enlace abriría Safari.
 - Códigos por email: `src/lib/otp.ts` (el SDK registra el plugin email OTP pero no lo tipa). Neon Auth de `test`:
