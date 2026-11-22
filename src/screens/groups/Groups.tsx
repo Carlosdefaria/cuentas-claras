@@ -94,13 +94,13 @@ function GroupList({ groups }: { groups: (GroupSummary & { balance: number })[] 
             <span className="min-w-0 flex-1">
               <span className="block break-words font-semibold leading-snug">{g.name}</span>
               <span className="block text-sm text-tinta-suave">{T.members(g.memberCount)}</span>
-            </span>
-            <span className={`flex-none text-right text-sm font-semibold tabular-nums ${TONE[balanceKind(g.balance)]}`}>
-              {balanceKind(g.balance) === 'owed'
-                ? B.row.owed(formatCents(g.balance))
-                : balanceKind(g.balance) === 'owes'
-                  ? B.row.owes(formatCents(-g.balance))
-                  : B.row.settled}
+              <span className={`block text-sm font-semibold tabular-nums ${TONE[balanceKind(g.balance)]}`}>
+                {balanceKind(g.balance) === 'owed'
+                  ? B.row.owed(formatCents(g.balance))
+                  : balanceKind(g.balance) === 'owes'
+                    ? B.row.owes(formatCents(-g.balance))
+                    : B.row.settled}
+              </span>
             </span>
             <ChevronRight aria-hidden className="size-5 flex-none text-tinta-tenue" />
           </Link>

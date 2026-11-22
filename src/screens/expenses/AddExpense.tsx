@@ -2,8 +2,9 @@
 // el troquel, quién pagó, la fecha y una fila por participante con su cuota en vivo (reparto igual, resto determinista).
 // Validación con validateExpense (dominio); se guarda con la RPC create_expense (atómica).
 
-import { useMemo, useRef, useState, type FormEvent } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useBlocker, useLocation, useNavigate, useParams } from 'react-router'
+import { ChevronDown } from 'lucide-react'
 import { es } from '../../i18n/es'
 import { useSession } from '../../auth/session'
 import { db } from '../../lib/data'
@@ -81,6 +82,23 @@ function ExpenseForm({ groupId, members }: { groupId: string; members: Member[] 
   const participantsRef = useRef<HTMLFieldSetElement>(null)
   const text = errorText(errors)
 
+  // Salir con el gasto a medio escribir (p. ej. «Volver» sin querer) pide confirmación; tras guardar, no.
+  const saved = useRef(false)
+  const dirty = amountText.trim() !== '' || description.trim() !== ''
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => dirty && !saved.current && currentLocation.pathname !== nextLocation.pathname)
+  useEffect(() => {
+    // Recargar o salir del documento (fuera del router): el aviso del navegador.
+    if (!dirty) return
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault()
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [dirty])
+  useEffect(() => {
+    if (blocker.state !== 'blocked') return
+    if (window.confirm(F.discard)) blocker.proceed()
+    else blocker.reset()
+  }, [blocker])
+
   // Vista previa en vivo: solo con un importe válido y alguien marcado.
   const preview = useMemo(() => {
     const cents = parseEurosToCents(amountText)
@@ -120,6 +138,7 @@ function ExpenseForm({ groupId, members }: { groupId: string; members: Member[] 
     setSubmitting(true)
     try {
       await createExpense(db, groupId, result.value)
+      saved.current = true
       // Desde el grupo se vuelve atrás (el detalle recarga desde la red); si se entró directo, se va al grupo.
       if ((location.state as { fromGroup?: boolean } | null)?.fromGroup) navigate(-1)
       else navigate(`/grupos/${groupId}`, { replace: true })
@@ -141,10 +160,17 @@ function ExpenseForm({ groupId, members }: { groupId: string; members: Member[] 
             {F.amount}
           </label>
           <div className="mt-0.5 flex items-baseline gap-1.5">
+            {/* El campo mide lo que su texto: un gemelo invisible en la misma celda de la rejilla le da el ancho exacto
+                (las comas son más estrechas que las cifras), y el «€» queda pegado detrás. */}
+            <span className="-ml-1 inline-grid min-w-0 max-w-[calc(100%-2.5rem)]">
+              <span aria-hidden className="invisible col-start-1 row-start-1 whitespace-pre px-1 py-1 text-[2.75rem] font-bold leading-none tracking-[-0.01em] tabular-nums">
+                {amountText || F.amountPlaceholder}
+              </span>
             <input
               ref={amountRef}
               id="gasto-importe"
               name="amount"
+              size={1}
               inputMode="decimal"
               autoComplete="off"
               enterKeyHint="next"
@@ -153,9 +179,12 @@ function ExpenseForm({ groupId, members }: { groupId: string; members: Member[] 
               onChange={(e) => setAmountText(e.target.value)}
               aria-invalid={text.amount ? true : undefined}
               aria-describedby={describedBy('importe', text.amount)}
-              className="w-full min-w-0 rounded-lg bg-transparent py-1 text-[2.75rem] font-bold leading-none tracking-[-0.01em] text-tinta tabular-nums placeholder:text-tinta/35 focus:outline-none focus-visible:outline-none focus:shadow-[0_0_0_3px_rgb(13_86_55/0.18)]"
+              className={`col-start-1 row-start-1 w-full min-w-0 rounded-lg bg-transparent px-1 py-1 text-[2.75rem] font-bold leading-none tracking-[-0.01em] text-tinta tabular-nums placeholder:text-tinta-tenue focus:outline-none focus-visible:outline-none ${
+                text.amount ? 'shadow-[0_0_0_2px_var(--color-sello)] focus:shadow-[0_0_0_3px_var(--color-sello)]' : 'focus:shadow-[0_0_0_3px_rgb(13_86_55/0.18)]'
+              }`}
             />
-            <span aria-hidden className="text-[1.75rem] font-semibold">
+            </span>
+            <span aria-hidden className="text-[1.875rem] font-semibold">
               €
             </span>
           </div>
@@ -200,13 +229,15 @@ function ExpenseForm({ groupId, members }: { groupId: string; members: Member[] 
               <label htmlFor="gasto-pagador" className="mb-1.5 block text-[0.9375rem] font-semibold">
                 {F.paidBy}
               </label>
+              <div className="relative">
               <select
                 ref={paidByRef}
                 id="gasto-pagador"
+                name="paidBy"
                 value={paidBy}
                 onChange={(e) => setPaidBy(e.target.value)}
                 aria-invalid={text.paidBy ? true : undefined}
-                className="h-12 w-full rounded-lg border border-trazo bg-white px-3 text-tinta focus:border-loteria focus:outline-none focus:shadow-[0_0_0_3px_rgb(13_86_55/0.18)]"
+                className="h-12 w-full appearance-none truncate rounded-lg border border-trazo bg-white pl-3 pr-9 text-tinta focus:border-loteria focus:outline-none focus:shadow-[0_0_0_3px_rgb(13_86_55/0.18)]"
               >
                 {ordered.map((m) => (
                   <option key={m.userId} value={m.userId}>
@@ -214,6 +245,8 @@ function ExpenseForm({ groupId, members }: { groupId: string; members: Member[] 
                   </option>
                 ))}
               </select>
+              <ChevronDown aria-hidden className="pointer-events-none absolute right-3 top-1/2 size-5 -translate-y-1/2 text-tinta-suave" />
+              </div>
             </div>
             <div className="w-[9.5rem] flex-none">
               <label htmlFor="gasto-fecha" className="mb-1.5 block text-[0.9375rem] font-semibold">
@@ -222,12 +255,13 @@ function ExpenseForm({ groupId, members }: { groupId: string; members: Member[] 
               <input
                 ref={dateRef}
                 id="gasto-fecha"
+                name="date"
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 aria-invalid={text.date ? true : undefined}
                 aria-describedby={describedBy('fecha', text.date)}
-                className="h-12 w-full rounded-lg border border-trazo bg-white px-3 text-tinta focus:border-loteria focus:outline-none focus:shadow-[0_0_0_3px_rgb(13_86_55/0.18)]"
+                className="h-12 w-full appearance-none rounded-lg border border-trazo bg-white px-3 text-tinta focus:border-loteria focus:outline-none focus:shadow-[0_0_0_3px_rgb(13_86_55/0.18)]"
               />
             </div>
           </div>

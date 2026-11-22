@@ -114,7 +114,10 @@ test('añadir un gasto: aparece en Gastos, cuadra en Saldos y en la lista de gru
 test('céntimos sobrantes, validación y error de red al guardar', async ({ page, browser }, info) => {
   const { context, id } = await groupOfTwo(page, browser, info, `Resto e2e ${Math.random().toString(36).slice(2, 6)}`)
   await context.close()
-  await page.goto(`/grupos/${id}/gastos/nuevo`)
+  // Se entra con el enlace de la app (como en el móvil), no recargando la página.
+  await page.goto(`/grupos/${id}`)
+  await page.getByRole('link', { name: 'Añadir gasto' }).click()
+  await expect(page).toHaveURL(`/grupos/${id}/gastos/nuevo`)
 
   // Validación: todo vacío → errores por campo y foco en el importe.
   await page.getByRole('button', { name: 'Añadir gasto' }).click()
@@ -139,6 +142,12 @@ test('céntimos sobrantes, validación y error de red al guardar', async ({ page
   await page.getByRole('button', { name: 'Añadir gasto' }).click()
   await expect(page.getByText('Elige al menos una persona.')).toBeVisible()
   await page.getByRole('button', { name: 'Todos' }).click()
+
+  // «Volver» con el gasto a medio escribir pide confirmación; al cancelar, sigue en el formulario.
+  page.once('dialog', (dialog) => void dialog.dismiss())
+  await page.getByRole('button', { name: 'Volver' }).click()
+  await expect(page).toHaveURL(`/grupos/${id}/gastos/nuevo`)
+  await expect(page.getByLabel('Importe')).toHaveValue('10,01')
 
   // Sin red al guardar: aviso y el formulario conserva lo escrito.
   await page.route('**/rest/v1/rpc/create_expense', (route) => route.abort('internetdisconnected'))

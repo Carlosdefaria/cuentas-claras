@@ -27,7 +27,8 @@ export function ExpensesPanel({ groupId, expenses, people, me }: { groupId: stri
         </section>
       ) : (
         groupByDay(expenses, (e) => e.date).map((day) => (
-          <section key={day.date} aria-label={dayLabel(day.date, today)}>
+          // content-visibility: los días fuera de pantalla no se pintan (grupos con cientos de gastos).
+          <section key={day.date} aria-label={dayLabel(day.date, today)} className="[contain-intrinsic-size:auto_240px] [content-visibility:auto]">
             <h2 className="mx-0.5 mb-2 mt-5 flex justify-between text-sm font-semibold text-tinta-suave">
               <span>{dayLabel(day.date, today)}</span>
               <span className="tabular-nums">{formatCents(day.items.reduce((a, e) => a + e.amountCents, 0))}</span>

@@ -12,8 +12,8 @@ describe('localToday', () => {
 describe('dayLabel', () => {
   const today = '2026-11-22'
   it.each([
-    ['2026-11-22', 'Hoy'],
-    ['2026-11-21', 'Ayer'],
+    ['2026-11-22', 'Hoy · 22 nov'],
+    ['2026-11-21', 'Ayer · 21 nov'],
     ['2026-11-20', '20 nov'],
     ['2026-03-01', '1 mar'],
     ['2025-12-31', '31 dic 2025'],
@@ -23,8 +23,8 @@ describe('dayLabel', () => {
   })
 
   it('Ayer cruzando de mes y de año', () => {
-    expect(dayLabel('2026-02-28', '2026-03-01')).toBe('Ayer')
-    expect(dayLabel('2025-12-31', '2026-01-01')).toBe('Ayer')
+    expect(dayLabel('2026-02-28', '2026-03-01')).toBe('Ayer · 28 feb')
+    expect(dayLabel('2025-12-31', '2026-01-01')).toBe('Ayer · 31 dic 2025')
   })
 })
 

@@ -10,7 +10,8 @@ import { dataErrorMessage } from '../../lib/dataErrors'
 import { peopleOf } from '../../lib/people'
 import { useAsync } from '../../lib/useAsync'
 import { formatCents } from '../../domain/money'
-import { ButtonLink, LoadError, Participacion } from '../../components/ui'
+import { ButtonLink, LoadError } from '../../components/ui'
+import { TALON_BG } from '../../components/talonBg'
 import { PersonDot } from './PersonDot'
 
 const T = es.expenses
@@ -55,27 +56,36 @@ export function ExpenseDetail() {
 
   const people = peopleOf(members, me)
   const payer = people.get(expense.paidBy)
-  const shares = [...expense.shares].sort((a, b) => Number(b.userId === me) - Number(a.userId === me))
+  // Mismo orden que en el formulario: tú primero y después por orden de llegada al grupo.
+  const order = new Map(members.map((m, i) => [m.userId, m.userId === me ? -1 : i]))
+  const shares = [...expense.shares].sort((a, b) => (order.get(a.userId) ?? 1e9) - (order.get(b.userId) ?? 1e9))
 
+  // Como al añadirlo: en el talón, cuánto y de qué; bajo el troquel, quién pagó, cuándo y el reparto.
   return (
-    <Participacion title={expense.description} tint="mantequilla">
-      <p className="text-[2.75rem] font-bold leading-none tracking-[-0.01em] tabular-nums">{formatCents(expense.amountCents)}</p>
-      <p className="mt-2 text-tinta-suave">{T.detail.paidOn(payer?.isMe ? T.you : (payer?.name ?? T.someone), formatDay(expense.date))}</p>
-      <h2 className="mt-5 text-[0.9375rem] font-semibold">{T.detail.split}</h2>
-      <ul className="mt-1 divide-y divide-dashed divide-trazo">
-        {shares.map((s) => {
-          const person = people.get(s.userId)
-          return (
-            <li key={s.userId} className="flex min-h-13 items-center gap-3">
-              <PersonDot person={person} size="sm" />
-              <span className="min-w-0 flex-1 break-words font-semibold">
-                {person?.isMe ? T.youName(person.name) : (person?.name ?? T.someone)}
-              </span>
-              <span className="flex-none font-semibold tabular-nums">{formatCents(s.amountCents)}</span>
-            </li>
-          )
-        })}
-      </ul>
-    </Participacion>
+    <section className="rounded-xl bg-hoja shadow-[0_1px_2px_rgb(19_38_29/0.08),0_8px_24px_-12px_rgb(19_38_29/0.25)]">
+      <div className={`${TALON_BG.mantequilla} rounded-t-xl px-5 pb-3 pt-4`}>
+        <p className="text-[2.75rem] font-bold leading-none tracking-[-0.01em] tabular-nums">{formatCents(expense.amountCents)}</p>
+        <h1 className="mt-2 break-words text-lg font-semibold leading-snug">{expense.description}</h1>
+      </div>
+      <div className={`troquel ${TALON_BG.mantequilla}`} style={{ backgroundImage: 'linear-gradient(to bottom, transparent 50%, var(--color-hoja) 50%)' }} aria-hidden />
+      <div className="px-5 pb-5 pt-1">
+        <p className="text-tinta-suave">{T.detail.paidOn(payer?.isMe ? T.you : (payer?.name ?? T.someone), formatDay(expense.date))}</p>
+        <h2 className="mt-4 text-[0.9375rem] font-semibold">{T.detail.split}</h2>
+        <ul className="mt-1 divide-y divide-dashed divide-trazo">
+          {shares.map((s) => {
+            const person = people.get(s.userId)
+            return (
+              <li key={s.userId} className="flex min-h-13 items-center gap-3">
+                <PersonDot person={person} size="sm" />
+                <span className="min-w-0 flex-1 break-words font-semibold">
+                  {person?.isMe ? T.youName(person.name) : (person?.name ?? T.someone)}
+                </span>
+                <span className="flex-none font-semibold tabular-nums">{formatCents(s.amountCents)}</span>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
+    </section>
   )
 }

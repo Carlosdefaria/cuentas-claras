@@ -91,6 +91,17 @@ describe('gastos con cuotas', () => {
   })
 })
 
+describe('my_group_ids() (migración 0006: RLS que calcula una vez los grupos del usuario)', () => {
+  it('devuelve solo mis grupos vivos; sin sesión, ninguno', async () => {
+    const [mine] = await asUser(u.bea, () => [sql.query(`select * from app_private.my_group_ids() as g`)])
+    expect(mine.map((r) => r.g)).toEqual([group])
+    const [none] = await asUser(null, () => [sql.query(`select * from app_private.my_group_ids() as g`)])
+    expect(none).toEqual([])
+    const [eva] = await asUser(u.eva, () => [sql.query(`select * from app_private.my_group_ids() as g`)])
+    expect(eva).toEqual([])
+  })
+})
+
 describe('saldos calculados con computeBalances sobre lo leído', () => {
   it('suman 0 y cuadran con los gastos vivos (el borrado no cuenta)', async () => {
     const rows = await readExpenses(u.ana, group)

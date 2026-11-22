@@ -221,6 +221,7 @@ export const es = {
       splitEqual: 'A partes iguales entre',
       all: 'Todos',
       none: 'Ninguno',
+      discard: '¿Descartar este gasto? Lo que has escrito no se guardará.',
       remainder: (cents: number, names: string) =>
         `${cents === 1 ? 'Sobra 1 céntimo: va' : `Sobran ${cents} céntimos: van`} a ${names}.`,
       errors: {

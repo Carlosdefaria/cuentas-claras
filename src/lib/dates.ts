@@ -17,13 +17,14 @@ const toUtc = (iso: string) => {
 const short = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short', timeZone: 'UTC' })
 const withYear = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
 
-/** «Hoy», «Ayer», «20 nov» o, de otro año, «31 dic 2025». */
+/** «Hoy · 22 nov», «Ayer · 21 nov», «20 nov» o, de otro año, «31 dic 2025». */
 export function dayLabel(iso: string, today: string): string {
   const diff = Math.round((toUtc(today) - toUtc(iso)) / 86_400_000)
-  if (diff === 0) return es.dates.today
-  if (diff === 1) return es.dates.yesterday
   const fmt = iso.slice(0, 4) === today.slice(0, 4) ? short : withYear
-  return fmt.format(toUtc(iso)).replace(/\./g, '')
+  const date = fmt.format(toUtc(iso)).replace(/\./g, '')
+  if (diff === 0) return `${es.dates.today} · ${date}`
+  if (diff === 1) return `${es.dates.yesterday} · ${date}`
+  return date
 }
 
 /** Agrupa elementos consecutivos del mismo día (la lista ya viene ordenada). */
