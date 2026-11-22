@@ -1,5 +1,5 @@
 // Armazón autenticado: barra superior y barra inferior de secciones (respeta la barra de inicio de iOS).
-// Las rutas secundarias declaran su destino de «Volver» con `handle: { back: '/' }`.
+// Las rutas secundarias declaran su destino de «Volver» con `handle: { back: '/' }` (o una función de los params).
 
 import type { ReactNode } from 'react'
 import { NavLink, Outlet, useMatches } from 'react-router'
@@ -51,7 +51,10 @@ export function AppFrame({ back, children }: { back?: string; children: ReactNod
 
 export function AppShell() {
   const matches = useMatches()
-  const back = [...matches].reverse().map((m) => (m.handle as { back?: string } | undefined)?.back).find(Boolean)
+  type Back = string | ((params: Record<string, string | undefined>) => string)
+  const match = [...matches].reverse().find((m) => (m.handle as { back?: Back } | undefined)?.back)
+  const raw = (match?.handle as { back?: Back } | undefined)?.back
+  const back = typeof raw === 'function' ? raw(match!.params) : raw
   return (
     <AppFrame back={back}>
       <Outlet />

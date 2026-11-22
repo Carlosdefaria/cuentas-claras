@@ -33,6 +33,18 @@ typography:
     fontWeight: 700
     lineHeight: 1
     letterSpacing: "0.01em"
+  cifra:
+    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif"
+    fontSize: "2.75rem"
+    fontWeight: 700
+    lineHeight: 1
+    letterSpacing: "-0.01em"
+  nota:
+    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif"
+    fontSize: "0.8125rem"
+    fontWeight: 400
+    lineHeight: 1.4
+    letterSpacing: "0em"
   rotulo-hoja:
     fontFamily: "Barlow Condensed, system-ui, sans-serif"
     fontSize: "1.5rem"
@@ -172,6 +184,8 @@ participación y título de sección. Escala fija en rem; inputs a ≥16 px para
 - **Título de sección** (`rotulo-seccion`): 2rem / 700 / mayúsculas.
 - **Título de participación** (`rotulo-titulo`): 1.875rem / 700 / mayúsculas. En una hoja inferior, compacta
   (`rotulo-hoja`): 1.5rem.
+- **Cifra** (`cifra`): 2.75rem / 700 / tabular, en la sans del sistema (nunca en condensada): el importe de un gasto.
+  Saldo destacado («Tu saldo»): 1.875rem / 700. **Nota** (`nota`): 0.8125rem para «te toca X» y céntimos sobrantes.
 - **Cuerpo** (`body`): 1rem / 1.5. **Etiqueta** (`label`): 0.9375rem / 600. **Pequeño** (`small`): 0.875rem.
 
 ### Named Rules
@@ -266,6 +280,22 @@ los PNG (192, 512, maskable 512 con el motivo en el 80 % central, `apple-touch-i
   miembros, y «Unirme al grupo» + «Ahora no». Al unirse, franja `loteria-claro` «Ya estás en «…».».
 - **Nuevo grupo** y **Unirme con un enlace**: participación (mantequilla y menta) con un campo y el botón principal;
   la moneda se muestra como texto fijo sobre `papel`.
+
+### Gastos y saldos (variante A de 3, elegida por el usuario: «Boleto»)
+- **Añadir gasto**: el gasto es una participación. Talón mantequilla con «Importe» y la cifra (2.75rem, el «€» pegado
+  detrás: el campo mide lo que su texto) y el concepto en un campo blanco translúcido; troquel; cuerpo con Pagó
+  (select) | Fecha (`type="date"` nativo) a dos columnas y «A partes iguales entre» con una fila de ≥52 px por persona
+  (casilla nativa en verde lotería, círculo de su talón, nombre, cuota en vivo) separadas por punteado; «Todos /
+  Ninguno» a la derecha; nota de céntimos sobrantes. Error del importe: anillo rojo sello. Salir con el gasto a
+  medio escribir pide confirmación.
+- **Pestaña Gastos** (por defecto; pestaña en la URL `?seccion=`): botón principal «Añadir gasto»; días («Hoy · 22
+  nov», «Ayer · 21 nov», «20 nov») con su total a la derecha; filas con el círculo del pagador, concepto, «Pagó X»,
+  importe en negrita y «te toca X» / «no participas» en nota. «Invitar» pasa a botón secundario.
+- **Pestaña Saldos**: participación compacta menta «Tu saldo» con «Te deben 301,82 €» (verde a favor) / «Debes …»
+  (rojo sello) / «Estás en paz» y el desglose «Has pagado X y te tocan Y»; debajo «Todo el grupo» (acreedores primero).
+- **Detalle del gasto**: igual que el formulario: cifra y concepto en el talón; quién pagó, la fecha y el reparto
+  (mismo orden que el formulario) bajo el troquel.
+- **Grupos**: línea «En total te deben / debes …» bajo «Tus grupos» y el saldo en cada fila, bajo «n miembros».
 
 ### Participación (componente propio)
 Talón superior en papel de color con el título en condensada, línea troquelada con muescas y cuerpo en

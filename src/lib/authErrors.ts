@@ -19,6 +19,8 @@ const BY_CODE: Record<string, string> = {
   otp_expired: E.codeExpired,
   too_many_attempts: E.codeTooManyAttempts,
   email_not_verified: E.emailNotVerified,
+  // Neon Auth rechaza el origen: la dirección de este despliegue no está en sus dominios de confianza.
+  invalid_origin: E.invalidOrigin,
 }
 
 /** Códigos del servidor (el original en error.error.code y el normalizado por el SDK), en minúsculas. */

@@ -18,6 +18,9 @@ describe('authErrorMessage', () => {
     [{ code: 'OTP_EXPIRED', status: 400 }, es.auth.errors.codeExpired],
     [{ code: 'TOO_MANY_ATTEMPTS', status: 403 }, es.auth.errors.codeTooManyAttempts],
     [{ code: 'EMAIL_NOT_VERIFIED', status: 403 }, es.auth.errors.emailNotVerified],
+    // Dirección de la app no autorizada en Neon Auth (p. ej. un Preview nuevo sin añadir a los dominios de confianza).
+    [{ code: 'INVALID_ORIGIN', status: 403 }, es.auth.errors.invalidOrigin],
+    [{ name: 'AuthApiError', code: 'forbidden', status: 403, error: { code: 'INVALID_ORIGIN', message: 'Invalid origin' } }, es.auth.errors.invalidOrigin],
   ])('%o → mensaje en español', (error, expected) => {
     expect(authErrorMessage(error)).toBe(expected)
   })

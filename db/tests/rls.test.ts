@@ -291,6 +291,10 @@ describe('rol anonymous (peticiones sin token)', () => {
     await expect(asAnonymous(() => [sql.query(`select 1 from public.${table} limit 1`)])).rejects.toThrow(/permission denied/)
   })
 
+  it('no puede ejecutar app_private.my_group_ids() (la usan las políticas, solo para authenticated)', async () => {
+    await expect(asAnonymous(() => [sql.query(`select * from app_private.my_group_ids()`)])).rejects.toThrow(/permission denied/)
+  })
+
   it('no puede usar el esquema app_private', async () => {
     await expect(asAnonymous(() => [sql.query(`select app_private.is_member(gen_random_uuid())`)])).rejects.toThrow(/permission denied/)
   })

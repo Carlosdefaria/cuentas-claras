@@ -51,6 +51,10 @@ Se construye por fases (PRD §11). Plan de trabajo: Fase 1 = auth, grupos, gasto
 - El cliente de Auth apunta a `${origin}/api/auth`. El JWT para la Data API sale de `getSession()` (`session.token`);
   por eso el proxy pide `get-session` con `disableCookieCache=true` (la caché del SDK responde sin JWT).
 - El SDK lanza excepciones en los errores de Auth (p. ej. `invalid_credentials`): capturarlas en la UI.
+- **Dominios de confianza de Neon Auth:** cada rama nueva tiene otra dirección de Preview en Vercel
+  (`cuentas-claras-git-<rama>-…-sistema-reservas.vercel.app`) y hay que añadirla a los dominios de confianza de Neon Auth
+  de `test` (consola: rama test → Auth → Configuration → Trusted domains). Si no, Neon Auth responde `403 INVALID_ORIGIN`
+  y la app muestra «Esta dirección de la app no está autorizada…». Production tendrá solo su dominio propio.
 - Verificación de email y recuperación de contraseña **por código (OTP), nunca por enlace**: en iOS la PWA
   instalada no comparte cookies con Safari, y un enlace abriría Safari.
 - Códigos por email: `src/lib/otp.ts` (el SDK registra el plugin email OTP pero no lo tipa). Neon Auth de `test`:
@@ -79,6 +83,15 @@ Se construye por fases (PRD §11). Plan de trabajo: Fase 1 = auth, grupos, gasto
   ayuda de instalación en Entrar/Registro; se une en Safari y después se ofrece instalar. En la app, «Unirme con un
   enlace» (`/unirse`) acepta el enlace o el código pegados. No se guarda el código en almacenamiento local.
 - Los e2e que crean grupos borran **primero los grupos** y luego los usuarios (las FK de `created_by` lo exigen).
+
+### Gastos y saldos
+- Formulario: `src/domain/expenseForm.ts` (`validateExpense`, `sharesFor` = `splitEqual`, `remainderRecipients`; tope
+  1.000.000,00 €). Se guarda con la RPC `create_expense` (atómica, valida miembros y suma). Solo crear: editar/borrar después.
+- Saldos **solo** con `computeBalances` (`src/lib/expenses.ts`: `balancesOf`, `myBalancesByGroup`); pagos (settlements)
+  ya cuentan aunque aún no haya UI para crearlos.
+- Lecturas de `expenses`/`settlements` **siempre con filtro de grupo** (`group_id=eq.` / `in.(…)`): sin él, RLS recorre
+  la tabla entera (en `test` hay 5.000 gastos sintéticos de `db:perf`) y la lista de grupos tardaba segundos.
+- Fechas de gasto en fecha local (`src/lib/dates.ts`); etiquetas «Hoy · 22 nov», «Ayer · 21 nov».
 
 ### Prioridad de plataforma
 - **iOS primero** (Safari y PWA instalada). Android, más adelante.
@@ -109,17 +122,17 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
   - `.neon` queda fijado en `production`; no cambiar con `neon checkout` sin `--no-env-pull`.
 
 ## Antes de tocar production
-- **No se aplica ninguna migración en production tal cual.** Antes, las migraciones 0001–0004 (y las posteriores, p. ej. 0005) se consolidarán en
+- **No se aplica ninguna migración en production tal cual.** Antes, las migraciones 0001–0004 (y las posteriores: 0005, 0006…) se consolidarán en
   una **línea base limpia** (sin el intento fallido 0003 y con el parche de `current_user_id()` ya integrado),
   que se probará en una **rama nueva creada desde production** (`npm run test:db` completo, incluido el test en
   frío) y cuyo esquema se comparará con el de `test` (`neon branches schema-diff` o equivalente) antes de aplicarla.
 - Production no se toca (ni `neon deploy`, ni migraciones, ni dominios de Auth) sin autorización explícita.
 
 ## Riesgos conocidos
-- **Rendimiento de RLS en `expense_shares`** (migración 0002 aplazada): con 50 miembros, 5.000 gastos y
-  127.125 cuotas, leer las cuotas de un grupo tarda **~179 ms con RLS** (44 ms sin RLS; límite PRD 200 ms).
-  La política evalúa `is_member` fila a fila. Revisar al cargar datos reales; posible arreglo: que la
-  política calcule una sola vez los grupos del usuario. Medir con `npm run db:perf`.
+- **Rendimiento de RLS** (resuelto en la migración 0006, solo en `test`): con el parche de `current_user_id()` las
+  políticas resolvían la identidad fila a fila y leer las 127.125 cuotas de un grupo (50 miembros, 5.000 gastos)
+  tardaba **~3,4 s**. Ahora las políticas usan `group_id in (select app_private.my_group_ids())`, que se calcula una
+  vez por consulta: **~45 ms** (límite PRD 200 ms). Medir con `npm run db:perf` tras tocar políticas.
 - **PARCHE TEMPORAL `pg_session_jwt` (migraciones 0002 + 0004; 0003 fue un intento fallido, ya sustituido).**
   La extensión no está precargada: se carga en cada conexión nueva del servidor con la primera llamada a `auth.*`
   y **al cargarse borra `request.jwt.claims`**, así que `auth.uid()` era NULL en la primera transacción de cada

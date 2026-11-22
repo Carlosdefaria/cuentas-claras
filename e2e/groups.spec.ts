@@ -83,7 +83,9 @@ test('crear grupo, invitar y unirse con el enlace sin tener cuenta (registro →
 
   await expect(page.getByRole('heading', { name: groupName })).toBeVisible()
   await expect(page.getByText('1 miembro · Euro (€)')).toBeVisible()
-  await expect(page.getByRole('tab', { name: 'Miembros' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('tab', { name: 'Gastos' })).toHaveAttribute('aria-selected', 'true')
+  await page.getByRole('tab', { name: 'Miembros' }).click()
+  await expect(page).toHaveURL(`/grupos/${id}?seccion=miembros`) // la pestaña queda en la URL
   await expect(page.getByRole('listitem').filter({ hasText: 'Ana Prueba' })).toContainText('Tú · Administra')
 
   // La hoja se vuelve a abrir con el botón y se cierra con Escape.
@@ -130,6 +132,7 @@ test('crear grupo, invitar y unirse con el enlace sin tener cuenta (registro →
   await expect(p2).toHaveURL(`/grupos/${id}`)
   await expect(p2.getByText(`Ya estás en «${groupName}».`)).toBeVisible()
   await expect(p2.getByText('2 miembros · Euro (€)')).toBeVisible()
+  await p2.getByRole('tab', { name: 'Miembros' }).click()
   await expect(p2.getByRole('listitem').filter({ hasText: 'Bea Prueba' })).toContainText('Tú')
   await expect(p2.getByRole('listitem').filter({ hasText: 'Ana Prueba' })).toContainText('Administra')
 

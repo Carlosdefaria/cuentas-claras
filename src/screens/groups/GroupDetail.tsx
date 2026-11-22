@@ -1,5 +1,5 @@
-// Detalle de grupo: nombre, miembros y «Invitar» (hoja inferior). Las pestañas Gastos y Saldos (PRD §7) ya están
-// en su sitio; su contenido llega con los gastos. Estados: cargando, no encontrado, error con Reintentar.
+// Detalle de grupo: nombre, «Invitar» (hoja inferior) y pestañas Gastos · Saldos · Miembros (PRD §7), con la pestaña
+// en la URL (?seccion=). Estados: cargando, no encontrado, error con Reintentar. Todo desde la red, sin caché.
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { useParams, useSearchParams } from 'react-router'
@@ -8,6 +8,11 @@ import { es } from '../../i18n/es'
 import { useSession } from '../../auth/session'
 import { db } from '../../lib/data'
 import { getGroup, listMembers, type GroupDetail as Group, type Member } from '../../lib/groups'
+import { balancesOf, listExpenses, listSettlements, type ExpenseRow } from '../../lib/expenses'
+import { peopleOf } from '../../lib/people'
+import type { Settlement } from '../../domain/balances'
+import { ExpensesPanel } from '../expenses/ExpensesPanel'
+import { BalancesPanel } from '../expenses/BalancesPanel'
 import { dataErrorMessage } from '../../lib/dataErrors'
 import { inviteUrl } from '../../lib/invite'
 import { initialOf, memberTalones, talonFor } from '../../lib/talon'
@@ -22,8 +27,13 @@ const T = es.groups.detail
 export function GroupDetail() {
   const { id = '' } = useParams()
   const data = useAsync(async () => {
-    const [group, members] = await Promise.all([getGroup(db, id), listMembers(db, id)])
-    return { group, members }
+    const [group, members, expenses, settlements] = await Promise.all([
+      getGroup(db, id),
+      listMembers(db, id),
+      listExpenses(db, id),
+      listSettlements(db, id),
+    ])
+    return { group, members, expenses, settlements }
   }, [id])
 
   if (data.status === 'loading') return <DetailSkeleton />
@@ -39,23 +49,27 @@ export function GroupDetail() {
       </section>
     )
   }
-  return <Loaded group={data.data.group} members={data.data.members} />
+  return <Loaded group={data.data.group} members={data.data.members} expenses={data.data.expenses} settlements={data.data.settlements} />
 }
 
 type Tab = 'expenses' | 'balances' | 'members'
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'expenses', label: T.expenses },
-  { id: 'balances', label: T.balances },
-  { id: 'members', label: T.membersTab },
+const TABS: { id: Tab; label: string; param: string }[] = [
+  { id: 'expenses', label: T.expenses, param: 'gastos' },
+  { id: 'balances', label: T.balances, param: 'saldos' },
+  { id: 'members', label: T.membersTab, param: 'miembros' },
 ]
 
-function Loaded({ group, members }: { group: Group; members: Member[] }) {
+function Loaded({ group, members, expenses, settlements }: { group: Group; members: Member[]; expenses: ExpenseRow[]; settlements: Settlement[] }) {
   const { state } = useSession()
   const me = state.status === 'signed-in' ? state.user.id : null
   const [params, setParams] = useSearchParams()
   const [inviteOpen, setInviteOpen] = useState(false)
   const [welcome] = useState(() => params.get('bienvenida') === '1')
-  const [tab, setTab] = useState<Tab>('members')
+  const tab: Tab = TABS.find((t) => t.param === params.get('seccion'))?.id ?? 'expenses'
+  const setTab = (next: Tab) => {
+    const param = TABS.find((t) => t.id === next)!.param
+    setParams(param === 'gastos' ? {} : { seccion: param }, { replace: true })
+  }
   const inviteButton = useRef<HTMLButtonElement>(null)
   const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ expenses: null, balances: null, members: null })
   const baseId = useId()
@@ -64,7 +78,10 @@ function Loaded({ group, members }: { group: Group; members: Member[] }) {
   // Recién creado (?invitar=1): se abre «Invitar». Recién unido (?bienvenida=1): aviso. Se limpian de la URL.
   useEffect(() => {
     if (params.get('invitar') === '1') setInviteOpen(true)
-    if (params.has('invitar') || params.has('bienvenida')) setParams({}, { replace: true })
+    if (params.has('invitar') || params.has('bienvenida')) {
+      const seccion = params.get('seccion')
+      setParams(seccion ? { seccion } : {}, { replace: true })
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -79,6 +96,8 @@ function Loaded({ group, members }: { group: Group; members: Member[] }) {
   }
 
   const talones = memberTalones(members)
+  const people = peopleOf(members, me)
+  const balances = balancesOf(members.map((m) => m.userId), expenses, settlements)
 
   return (
     <>
@@ -101,7 +120,7 @@ function Loaded({ group, members }: { group: Group; members: Member[] }) {
           type="button"
           onClick={() => setInviteOpen(true)}
           aria-haspopup="dialog"
-          className="inline-flex h-11 flex-none items-center gap-1.5 rounded-lg bg-loteria px-3.5 text-[0.9375rem] font-semibold text-white transition-colors duration-150 hover:bg-loteria-hondo active:bg-loteria-hondo"
+          className="inline-flex h-11 flex-none items-center gap-1.5 rounded-lg border border-trazo bg-white px-3.5 text-[0.9375rem] font-semibold text-loteria transition-colors duration-150 hover:bg-papel active:bg-papel-hondo"
         >
           <UserPlus aria-hidden className="size-5" />
           {T.invite}
@@ -151,10 +170,10 @@ function Loaded({ group, members }: { group: Group; members: Member[] }) {
               </ul>
               {members.length === 1 && <p className="mt-3 text-center text-tinta-suave">{T.alone}</p>}
             </>
+          ) : t.id === 'expenses' ? (
+            <ExpensesPanel groupId={group.id} expenses={expenses} people={people} me={me} />
           ) : (
-            <p className="rounded-xl border-2 border-dashed border-trazo px-5 py-7 text-center text-tinta-suave">
-              {t.id === 'expenses' ? T.expensesSoon : T.balancesSoon}
-            </p>
+            <BalancesPanel balances={balances} people={people} me={me} expenses={expenses} settlements={settlements} />
           )}
         </div>
       ))}

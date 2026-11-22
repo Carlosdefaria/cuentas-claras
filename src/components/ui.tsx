@@ -201,13 +201,25 @@ export function LoadError({ title, message, onRetry }: { title: string; message:
 }
 
 /** Enlace con aspecto de botón (navegación, no acción). */
-export function ButtonLink({ to, tone = 'primario', children, className = '' }: { to: string; tone?: 'primario' | 'secundario'; children: ReactNode; className?: string }) {
+export function ButtonLink({
+  to,
+  state,
+  tone = 'primario',
+  children,
+  className = '',
+}: {
+  to: string
+  state?: unknown
+  tone?: 'primario' | 'secundario'
+  children: ReactNode
+  className?: string
+}) {
   const tones = {
     primario: 'bg-loteria text-white hover:bg-loteria-hondo active:bg-loteria-hondo',
     secundario: 'border border-trazo bg-white text-loteria hover:bg-papel active:bg-papel-hondo',
   }[tone]
   return (
-    <Link to={to} className={`inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg px-4 text-base font-semibold transition-colors duration-150 ${tones} ${className}`}>
+    <Link to={to} state={state} className={`inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg px-4 text-base font-semibold transition-colors duration-150 ${tones} ${className}`}>
       {children}
     </Link>
   )
