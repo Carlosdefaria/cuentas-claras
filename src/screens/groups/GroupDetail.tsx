@@ -10,7 +10,7 @@ import { db } from '../../lib/data'
 import { getGroup, listMembers, type GroupDetail as Group, type Member } from '../../lib/groups'
 import { dataErrorMessage } from '../../lib/dataErrors'
 import { inviteUrl } from '../../lib/invite'
-import { initialOf, memberTalones } from '../../lib/talon'
+import { initialOf, memberTalones, talonFor } from '../../lib/talon'
 import { useAsync } from '../../lib/useAsync'
 import { ButtonLink, LoadError } from '../../components/ui'
 import { TALON_BG } from '../../components/talonBg'
@@ -144,7 +144,7 @@ function Loaded({ group, members }: { group: Group; members: Member[] }) {
                     </span>
                     <span className="min-w-0 flex-1 break-words font-semibold">{m.name}</span>
                     <span className="flex-none text-sm text-tinta-suave">
-                      {[m.userId === me ? T.you : null, m.role === 'admin' ? T.admin : null].filter(Boolean).join(' · ')}
+                      {[m.userId === me ? T.you : null, m.role === 'admin' ? T.admin : null].filter(Boolean).join(' · ') || T.member}
                     </span>
                   </li>
                 ))}
@@ -167,6 +167,7 @@ function Loaded({ group, members }: { group: Group; members: Member[] }) {
         }}
         groupName={group.name}
         url={url}
+        tint={talonFor(group.id)}
       />
     </>
   )

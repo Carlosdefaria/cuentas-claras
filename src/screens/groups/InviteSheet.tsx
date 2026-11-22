@@ -6,14 +6,29 @@ import { Check, Copy, Share, X } from 'lucide-react'
 import { es } from '../../i18n/es'
 import { Button, Participacion } from '../../components/ui'
 import { canShareUrl } from '../../lib/share'
+import type { Talon } from '../../lib/talon'
 
 const T = es.groups.invite
 
 type CopyState = 'idle' | 'copied' | 'failed'
 
-export function InviteSheet({ open, onClose, groupName, url }: { open: boolean; onClose: () => void; groupName: string; url: string }) {
+export function InviteSheet({
+  open,
+  onClose,
+  groupName,
+  url,
+  tint = 'menta',
+}: {
+  open: boolean
+  onClose: () => void
+  groupName: string
+  url: string
+  /** Talón del grupo (el mismo color que en la lista). */
+  tint?: Talon
+}) {
   const ref = useRef<HTMLDialogElement>(null)
   const linkRef = useRef<HTMLInputElement>(null)
+  const primaryRef = useRef<HTMLButtonElement>(null)
   const titleId = useId()
   const [copy, setCopy] = useState<CopyState>('idle')
   const shareable = canShareUrl(url)
@@ -24,6 +39,8 @@ export function InviteSheet({ open, onClose, groupName, url }: { open: boolean; 
     if (open && !dialog.open) {
       setCopy('idle')
       dialog.showModal()
+      // showModal() enfoca el primer control (la ✕): el foco inicial va a la acción principal.
+      primaryRef.current?.focus()
     } else if (!open && dialog.open) dialog.close()
   }, [open])
 
@@ -70,7 +87,7 @@ export function InviteSheet({ open, onClose, groupName, url }: { open: boolean; 
             <X aria-hidden className="size-5" />
           </button>
         </div>
-        <Participacion title={<span id={titleId}>{T.title(groupName)}</span>} tint="menta" level={2} compact>
+        <Participacion title={<span id={titleId}>{T.title(groupName)}</span>} tint={tint} level={2} compact>
           <p className="text-[0.9375rem] text-tinta-suave">{T.body}</p>
           <label className="mt-3 block">
             <span className="sr-only">{T.linkLabel}</span>
@@ -85,15 +102,14 @@ export function InviteSheet({ open, onClose, groupName, url }: { open: boolean; 
         </Participacion>
         <div className="mt-4 flex flex-col gap-2.5">
           {shareable && (
-            // El foco inicial del diálogo va a la acción principal, no a la ✕.
-            <Button autoFocus onClick={() => void share()}>
+            <Button ref={primaryRef} onClick={() => void share()}>
               <Share aria-hidden className="size-5" />
               {T.share}
             </Button>
           )}
           <button
             type="button"
-            autoFocus={!shareable}
+            ref={shareable ? undefined : primaryRef}
             onClick={() => void copyLink()}
             className={`inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg px-4 text-base font-semibold transition-colors duration-150 ${
               shareable ? 'border border-trazo bg-white text-loteria hover:bg-papel' : 'bg-loteria text-white hover:bg-loteria-hondo'

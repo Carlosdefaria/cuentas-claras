@@ -109,8 +109,10 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field({ l
           type={isPassword && reveal ? 'text' : type}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
-          className={`h-12 w-full rounded-lg border bg-white px-3.5 text-tinta placeholder:text-tinta-tenue transition-[border-color,box-shadow] duration-150 focus:outline-none focus-visible:outline-none focus:border-loteria focus:shadow-[0_0_0_3px_rgb(13_86_55/0.18)] ${
-            error ? 'border-sello' : 'border-trazo'
+          className={`h-12 w-full rounded-lg border bg-white px-3.5 text-tinta placeholder:text-tinta-tenue transition-[border-color,box-shadow] duration-150 focus:outline-none focus-visible:outline-none ${
+            error
+              ? 'border-sello focus:border-sello focus:shadow-[0_0_0_3px_rgb(179_48_42/0.18)]'
+              : 'border-trazo focus:border-loteria focus:shadow-[0_0_0_3px_rgb(13_86_55/0.18)]'
           } ${isPassword ? 'pr-12' : ''}`}
           {...input}
         />
@@ -142,13 +144,17 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field({ l
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean; tone?: 'primario' | 'peligro' }
 
-export function Button({ loading, tone = 'primario', children, disabled, className = '', ...rest }: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  { loading, tone = 'primario', children, disabled, className = '', ...rest },
+  ref,
+) {
   const tones = {
     primario: 'bg-loteria text-white hover:bg-loteria-hondo active:bg-loteria-hondo',
     peligro: 'border border-sello/40 bg-white text-sello hover:bg-sello-claro active:bg-sello-claro',
   }[tone]
   return (
     <button
+      ref={ref}
       {...rest}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
@@ -158,7 +164,7 @@ export function Button({ loading, tone = 'primario', children, disabled, classNa
       {children}
     </button>
   )
-}
+})
 
 export function Alert({ children }: { children: ReactNode }) {
   return (

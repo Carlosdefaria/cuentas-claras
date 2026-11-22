@@ -175,7 +175,7 @@ test('enlaces no válidos, pegar un enlace y error de red con Reintentar', async
   let fail = true
   await page.route('**/rest/v1/groups**', (route) => (fail ? route.abort('internetdisconnected') : route.continue()))
   await page.goto('/')
-  await expect(page.getByText('No hemos podido cargar tus grupos.')).toBeVisible()
+  await expect(page.getByText('No hemos podido cargar tus grupos')).toBeVisible()
   await expect(page.getByText('No hay conexión. Revisa tu internet y vuelve a probar.')).toBeVisible()
   fail = false
   await page.getByRole('button', { name: 'Reintentar' }).click()

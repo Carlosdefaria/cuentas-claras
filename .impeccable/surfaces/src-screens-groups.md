@@ -24,8 +24,9 @@ THESIS: La pantalla de grupos es un punto de partida: las dos acciones que mueve
 arriba, la lista compacta debajo. Rechaza el tablero de tarjetas decorativas donde la acción queda al fondo.
 
 OWN-WORLD: El del sistema (DESIGN.md): papel verde agua, barra verde lotería, talones de color por grupo y por
-persona, troquel solo en la participación de la hoja «Invitar» y de la invitación. Lista en tarjeta plana con
-filas de 64 px y una tira vertical del talón del grupo.
+persona; troquel en las participaciones de las pantallas de tarea (Nuevo grupo, Unirme con un enlace, invitación
+sin sesión) y en la de la hoja «Invitar», en el talón del grupo. Lista en tarjeta plana con filas de 64 px y un
+monograma en cuadro del talón del grupo (sustituye a la tira vertical de la maqueta: la tira apenas se veía).
 
 STORY: Ve sus grupos y sabe qué hacer en un segundo; crea uno, lo comparte con la hoja nativa y los demás
 aparecen como miembros. Quien recibe el enlace se une sin perderse en el registro.
