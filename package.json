@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:migrate": "NODE_USE_ENV_PROXY=1 node --disable-warning=UNDICI-EHPA scripts/migrate.ts",
+    "db:migrate:production": "NODE_USE_ENV_PROXY=1 node --disable-warning=UNDICI-EHPA scripts/migrateProduction.ts",
     "test:db": "NODE_USE_ENV_PROXY=1 vitest run --config vitest.db.config.ts",
     "db:perf": "NODE_USE_ENV_PROXY=1 node --disable-warning=UNDICI-EHPA scripts/seedPerf.ts",
     "test:e2e": "NODE_USE_ENV_PROXY=1 NODE_OPTIONS=--disable-warning=UNDICI-EHPA NO_PROXY=localhost,127.0.0.1 playwright test"

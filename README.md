@@ -20,6 +20,12 @@ npm run icons    # regenera los PNG del icono desde design/icon/*.svg
 
 Variables: ver [`.env.example`](.env.example). Los ficheros `.env*` reales nunca se suben al repo.
 
+## Production
+
+App: https://cuentas-claras-ochre-gamma.vercel.app (rama `production` de Neon). Variables del entorno **Production** de
+Vercel: `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET` (secreto, distinto del de Preview) y `VITE_NEON_DATA_API_URL`.
+Esquema: `db/baseline.sql`; cambios con `npm run db:migrate:production` (ver CLAUDE.md, sección Production).
+
 ## Despliegue de prueba (Vercel Preview)
 
 Cada push a una rama genera un Preview que usa la rama `test` de Neon. Variables del entorno **Preview**:
