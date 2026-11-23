@@ -213,7 +213,7 @@ describe('actividad y privilegios', () => {
       /permission denied/,
     )
     await expect(
-      asUser(u.bea, () => [sql.query(`select app_private.check_expense_input($1, 'x', 1, $2, '[]'::jsonb)`, [group, u.bea])]),
+      asUser(u.bea, () => [sql.query(`select app_private.check_expense_input($1, 'x', 1, $2, '[]'::jsonb, 'equal')`, [group, u.bea])]),
     ).rejects.toThrow(/permission denied/)
   })
 })

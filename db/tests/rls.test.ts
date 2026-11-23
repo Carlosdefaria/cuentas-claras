@@ -9,7 +9,11 @@ const TABLES = ['groups', 'memberships', 'expenses', 'expense_shares', 'settleme
 const RPCS = [
   'public.create_group(text)',
   'public.join_group(text)',
-  'public.create_expense(uuid, text, integer, uuid, date, jsonb)',
+  'public.create_expense(uuid, text, integer, uuid, date, jsonb, text)',
+  'public.update_expense(uuid, timestamptz, text, integer, uuid, date, jsonb, text)',
+  'public.delete_expense(uuid)',
+  'public.create_settlement(uuid, uuid, uuid, integer, date)',
+  'public.delete_settlement(uuid)',
   'public.group_members()',
 ] as const
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { splitEqual } from './split'
+import { splitByPercent, splitEqual } from './split'
 import { mulberry32, sum } from './testUtils'
 
 describe('splitEqual', () => {
@@ -76,6 +76,48 @@ describe('splitEqual', () => {
       expect(sum(shares)).toBe(total)
       expect(Math.max(...shares) - Math.min(...shares)).toBeLessThanOrEqual(1)
       expect(shares.every(Number.isInteger)).toBe(true)
+    }
+  })
+})
+
+describe('splitByPercent (mayor resto; empates por id menor)', () => {
+  const pct = (o: Record<string, number>) => new Map(Object.entries(o))
+
+  it('100 € al 33,33 / 33,33 / 33,34 % → exacto', () => {
+    expect(Object.fromEntries(splitByPercent(10000, pct({ a: 3333, b: 3333, c: 3334 })))).toEqual({ a: 3333, b: 3333, c: 3334 })
+  })
+
+  it('el céntimo sobrante va al mayor resto, no al menor id', () => {
+    // 1,00 € al 33,5 / 33,5 / 33 %: exactos 33,5 · 33,5 · 33 → 33, 33, 33 y sobra 1 → empate a y b, gana a.
+    expect(Object.fromEntries(splitByPercent(100, pct({ c: 3300, b: 3350, a: 3350 })))).toEqual({ a: 34, b: 33, c: 33 })
+    // 0,05 € al 90 / 10 %: exactos 4,5 · 0,5 → 4 y 0, sobra 1 → empate de restos, gana el id menor.
+    expect(Object.fromEntries(splitByPercent(5, pct({ y: 1000, x: 9000 })))).toEqual({ x: 5, y: 0 })
+    expect(Object.fromEntries(splitByPercent(5, pct({ x: 1000, y: 9000 })))).toEqual({ x: 1, y: 4 })
+  })
+
+  it('rechaza porcentajes que no suman 100 % o no son enteros', () => {
+    expect(() => splitByPercent(100, pct({ a: 5000, b: 4999 }))).toThrow()
+    expect(() => splitByPercent(100, pct({ a: 5000.5, b: 4999.5 }))).toThrow()
+    expect(() => splitByPercent(100, pct({}))).toThrow()
+  })
+
+  it('aleatorio (2.000 casos): suma exacta, sin negativos y cada cuota a menos de 1 céntimo de la exacta', () => {
+    const rand = mulberry32(55)
+    for (let round = 0; round < 2000; round++) {
+      const n = 1 + Math.floor(rand() * 8)
+      const raw = Array.from({ length: n }, () => Math.floor(rand() * 1000))
+      const total = sum(raw) || 1
+      const bp = raw.map((r) => Math.floor((r * 10000) / total))
+      bp[0] += 10000 - sum(bp)
+      const ids = raw.map((_, i) => `u${i}`)
+      const cents = Math.floor(rand() * 10_000_000)
+      const result = splitByPercent(cents, new Map(ids.map((id, i) => [id, bp[i]])))
+      expect(sum(result.values())).toBe(cents)
+      ids.forEach((id, i) => {
+        const share = result.get(id)!
+        expect(share).toBeGreaterThanOrEqual(0)
+        expect(Math.abs(share * 10000 - cents * bp[i])).toBeLessThan(10000)
+      })
     }
   })
 })

@@ -43,6 +43,15 @@ describe('parseActivity', () => {
     })
   })
 
+  it('cambio de tipo de reparto', () => {
+    const event = parseActivity('expense_updated', {
+      expense_id: E, description: 'x', amount_cents: 1, changes: { split_type: { from: 'equal', to: 'percent' }, split: true },
+    })
+    expect(event.kind === 'expense_updated' && event.changes).toEqual([{ field: 'splitType', from: 'equal', to: 'percent' }, { field: 'split' }])
+    const bad = parseActivity('expense_updated', { expense_id: E, description: 'x', amount_cents: 1, changes: { split_type: { from: 'equal', to: 'raro' } } })
+    expect(bad.kind === 'expense_updated' && bad.changes).toEqual([])
+  })
+
   it('reparto distinto con las mismas personas (Fase 2) se marca como «split»', () => {
     const event = parseActivity('expense_updated', { expense_id: E, description: 'x', amount_cents: 1, changes: { split: true } })
     expect(event.kind === 'expense_updated' && event.changes).toEqual([{ field: 'split' }])

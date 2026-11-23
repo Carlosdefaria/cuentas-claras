@@ -29,7 +29,8 @@ const raw = (id: string, group: string, paidBy: string, amount: number, shares: 
   created_at: '2026-11-22T20:00:00Z',
   created_by: paidBy,
   updated_at: '2026-11-22T20:00:00.123456+00:00',
-  expense_shares: shares.map(([user_id, amount_cents]) => ({ user_id, amount_cents })),
+  split_type: 'equal',
+  expense_shares: shares.map(([user_id, amount_cents]) => ({ user_id, amount_cents, percent_bp: null })),
 })
 
 function api(byPath: (path: string) => unknown) {
@@ -64,7 +65,7 @@ describe('saldos (siempre con computeBalances)', () => {
   it('balancesOf: 10,00 € de Ana entre Ana y Bea → Ana +5,00, Bea −5,00, Carla 0', () => {
     const [e] = [raw(E1, G1, 'ana', 1000, [['ana', 500], ['bea', 500]])].map((r) => ({
       id: r.id, groupId: G1, description: r.description, amountCents: r.amount_cents, paidBy: r.paid_by,
-      date: r.expense_date, createdAt: r.created_at, createdBy: r.created_by, updatedAt: r.updated_at, shares: r.expense_shares.map((s) => ({ userId: s.user_id, amountCents: s.amount_cents })),
+      date: r.expense_date, createdAt: r.created_at, createdBy: r.created_by, updatedAt: r.updated_at, splitType: "equal" as const, shares: r.expense_shares.map((s) => ({ userId: s.user_id, amountCents: s.amount_cents })),
     }))
     const b = balancesOf(['ana', 'bea', 'carla'], [e], [{ fromUser: 'bea', toUser: 'ana', amountCents: 200 }])
     expect(Object.fromEntries(b)).toEqual({ ana: 300, bea: -300, carla: 0 })
@@ -93,7 +94,7 @@ describe('createExpense', () => {
   it('llama a create_expense con las cuotas en snake_case', async () => {
     const a = api(() => [])
     const id = await createExpense(a, G1, {
-      amountCents: 1000, description: 'Cena', paidBy: 'ana', date: '2026-11-22', shares: sharesFor(1000, ['bea', 'ana', 'carla']),
+      amountCents: 1000, description: 'Cena', paidBy: 'ana', date: '2026-11-22', splitType: 'equal', shares: sharesFor(1000, ['bea', 'ana', 'carla']),
     })
     expect(id).toBe(E1)
     expect(a.rpc).toHaveBeenCalledWith('create_expense', {
@@ -107,6 +108,7 @@ describe('createExpense', () => {
         { user_id: 'bea', amount_cents: 333 },
         { user_id: 'carla', amount_cents: 333 },
       ],
+      p_split_type: 'equal',
     })
   })
 })
@@ -119,6 +121,18 @@ describe('editar, borrar y actividad', () => {
     expect(a.select.mock.calls[0][0]).toContain('created_by,updated_at')
   })
 
+  it('getExpense trae el tipo de reparto y los porcentajes', async () => {
+    const r = { ...raw(E1, G1, 'ana', 1000, []), split_type: 'percent', expense_shares: [{ user_id: 'ana', amount_cents: 600, percent_bp: 6000 }, { user_id: 'bea', amount_cents: 400, percent_bp: 4000 }] }
+    const a = api(() => [r])
+    expect(await getExpense(a, G1, E1)).toMatchObject({
+      splitType: 'percent',
+      shares: [{ userId: 'ana', amountCents: 600, percentBp: 6000 }, { userId: 'bea', amountCents: 400, percentBp: 4000 }],
+    })
+    expect(a.select.mock.calls[0][0]).toContain('split_type,expense_shares(user_id,amount_cents,percent_bp)')
+    // Sin porcentaje (igual o por importes) no hay percentBp.
+    expect((await getExpense(api(() => [raw(E1, G1, 'ana', 1000, [['ana', 1000]])]), G1, E1))!.shares[0]).toEqual({ userId: 'ana', amountCents: 1000 })
+  })
+
   it('updateExpense manda la versión leída y las cuotas nuevas a la RPC update_expense', async () => {
     const a = api(() => null)
     await updateExpense(a, E1, '2026-11-22T20:00:00.123456+00:00', {
@@ -126,7 +140,11 @@ describe('editar, borrar y actividad', () => {
       description: 'Cena',
       paidBy: 'bea',
       date: '2026-11-21',
-      shares: sharesFor(900, ['ana', 'bea']),
+      splitType: 'percent',
+      shares: [
+        { userId: 'ana', amountCents: 540, percentBp: 6000 },
+        { userId: 'bea', amountCents: 360, percentBp: 4000 },
+      ],
     })
     expect(a.rpc).toHaveBeenCalledWith('update_expense', {
       p_expense_id: E1,
@@ -136,9 +154,10 @@ describe('editar, borrar y actividad', () => {
       p_paid_by: 'bea',
       p_expense_date: '2026-11-21',
       p_shares: [
-        { user_id: 'ana', amount_cents: 450 },
-        { user_id: 'bea', amount_cents: 450 },
+        { user_id: 'ana', amount_cents: 540, percent_bp: 6000 },
+        { user_id: 'bea', amount_cents: 360, percent_bp: 4000 },
       ],
+      p_split_type: 'percent',
     })
   })
 

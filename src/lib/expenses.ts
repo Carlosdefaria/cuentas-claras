@@ -3,7 +3,7 @@
 
 import { parseActivity, type ActivityEvent } from '../domain/activity'
 import { computeBalances, type Settlement } from '../domain/balances'
-import type { ValidExpense } from '../domain/expenseForm'
+import type { SplitType, ValidExpense } from '../domain/expenseForm'
 import type { DataApi } from './dataApi'
 import { isUuid } from './groups'
 
@@ -19,7 +19,9 @@ export interface ExpenseRow {
   createdBy: string
   /** Versión para el bloqueo optimista de update_expense (se manda tal cual la devolvió la Data API). */
   updatedAt: string
-  shares: { userId: string; amountCents: number }[]
+  splitType: SplitType
+  /** `percentBp` solo en repartos por porcentajes. */
+  shares: { userId: string; amountCents: number; percentBp?: number }[]
 }
 
 interface RawExpense {
@@ -32,10 +34,11 @@ interface RawExpense {
   created_at: string
   created_by: string
   updated_at: string
-  expense_shares: { user_id: string; amount_cents: number }[]
+  split_type: SplitType
+  expense_shares: { user_id: string; amount_cents: number; percent_bp: number | null }[]
 }
 
-const EXPENSE_SELECT = 'id,group_id,description,amount_cents,paid_by,expense_date,created_at,created_by,updated_at,expense_shares(user_id,amount_cents)'
+const EXPENSE_SELECT = 'id,group_id,description,amount_cents,paid_by,expense_date,created_at,created_by,updated_at,split_type,expense_shares(user_id,amount_cents,percent_bp)'
 
 const toExpense = (r: RawExpense): ExpenseRow => ({
   id: r.id,
@@ -47,7 +50,12 @@ const toExpense = (r: RawExpense): ExpenseRow => ({
   createdAt: r.created_at,
   createdBy: r.created_by,
   updatedAt: r.updated_at,
-  shares: r.expense_shares.map((s) => ({ userId: s.user_id, amountCents: s.amount_cents })),
+  splitType: r.split_type ?? 'equal',
+  shares: r.expense_shares.map((s) =>
+    s.percent_bp === null || s.percent_bp === undefined
+      ? { userId: s.user_id, amountCents: s.amount_cents }
+      : { userId: s.user_id, amountCents: s.amount_cents, percentBp: s.percent_bp },
+  ),
 })
 
 /** Gastos vivos de un grupo, del más reciente al más antiguo, con sus cuotas. */
@@ -181,6 +189,12 @@ export async function myBalancesByGroup(api: DataApi, myId: string, groupIds: re
   return result
 }
 
+/** Cuotas para las RPC (snake_case; `percent_bp` solo si lo hay). */
+const sharesPayload = (expense: ValidExpense) =>
+  expense.shares.map((s) =>
+    s.percentBp === undefined ? { user_id: s.userId, amount_cents: s.amountCents } : { user_id: s.userId, amount_cents: s.amountCents, percent_bp: s.percentBp },
+  )
+
 /** Crea el gasto con sus cuotas en una sola transacción (RPC create_expense). Devuelve su id. */
 export async function createExpense(api: DataApi, groupId: string, expense: ValidExpense): Promise<string> {
   return api.rpc<string>('create_expense', {
@@ -189,7 +203,8 @@ export async function createExpense(api: DataApi, groupId: string, expense: Vali
     p_amount_cents: expense.amountCents,
     p_paid_by: expense.paidBy,
     p_expense_date: expense.date,
-    p_shares: expense.shares.map((s) => ({ user_id: s.userId, amount_cents: s.amountCents })),
+    p_shares: sharesPayload(expense),
+    p_split_type: expense.splitType,
   })
 }
 
@@ -205,7 +220,8 @@ export async function updateExpense(api: DataApi, expenseId: string, expectedUpd
     p_amount_cents: expense.amountCents,
     p_paid_by: expense.paidBy,
     p_expense_date: expense.date,
-    p_shares: expense.shares.map((s) => ({ user_id: s.userId, amount_cents: s.amountCents })),
+    p_shares: sharesPayload(expense),
+    p_split_type: expense.splitType,
   })
 }
 

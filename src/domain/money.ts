@@ -30,3 +30,22 @@ export function centsToInputText(cents: number): string {
   const rest = cents % 100
   return rest === 0 ? String(euros) : `${euros},${String(rest).padStart(2, '0')}`
 }
+
+const PERCENT_RE = /^(\d{1,3})(?:[.,](\d{1,2}))?$/
+
+/** «33,33» → 3333 puntos básicos (hasta 2 decimales, de 0 a 100 %). null si no es válido. */
+export function parsePercentToBasisPoints(input: string): number | null {
+  const match = PERCENT_RE.exec(input.trim())
+  if (!match) return null
+  const bp = Number(match[1]) * 100 + Number((match[2] ?? '').padEnd(2, '0'))
+  return bp <= 10000 ? bp : null
+}
+
+/** 3333 → «33,33»; 1250 → «12,5»; 4000 → «40». Inversa de parsePercentToBasisPoints. */
+export function basisPointsToText(bp: number): string {
+  if (!Number.isSafeInteger(bp) || bp < 0) throw new Error(`Porcentaje no válido: ${bp}`)
+  const whole = Math.floor(bp / 100)
+  const rest = bp % 100
+  if (rest === 0) return String(whole)
+  return `${whole},${String(rest).padStart(2, '0').replace(/0$/, '')}`
+}

@@ -56,3 +56,12 @@ registra quien paga o quien cobra; borra quien lo registró.
 CRITIQUE (⚠️ DEGRADED: single-context, sin sub-agentes por política de la sesión): detector limpio tras pasar la cifra
 de la hoja a la escala de DESIGN.md (2.75rem/1.875rem); revisión visual en WebKit (iPhone 15). Arreglado: el desglose de
 «Tu saldo» no cuadraba con la cifra tras un pago (ahora suma los pagos hechos y recibidos).
+
+## Tipos de reparto (RF-05)
+
+FORM: «Frase y hoja», variante B de 3 (A «Control segmentado», C «Pestañas y suma fija»). Indicación del usuario: lo
+más minimalista y sin fricción para añadir gastos.
+
+CRITIQUE (⚠️ DEGRADED: single-context, sin sub-agentes por política de la sesión): detector limpio; revisión visual en
+WebKit (iPhone 15). Ajustado: la línea de suma se acortó («110,00 € de 120,00 € · Faltan 10,00 €») para caber en una
+línea.

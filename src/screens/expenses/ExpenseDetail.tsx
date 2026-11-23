@@ -13,7 +13,7 @@ import { dataErrorMessage, isDataError } from '../../lib/dataErrors'
 import { localToday, whenLabel } from '../../lib/dates'
 import { peopleOf } from '../../lib/people'
 import { useAsync } from '../../lib/useAsync'
-import { formatCents } from '../../domain/money'
+import { basisPointsToText, formatCents } from '../../domain/money'
 import { ButtonLink, LoadError } from '../../components/ui'
 import type { Person } from '../../lib/people'
 import { ConfirmDeleteSheet } from './ConfirmDeleteSheet'
@@ -77,7 +77,9 @@ export function ExpenseDetail() {
       <div className={`troquel ${TALON_BG.mantequilla}`} style={{ backgroundImage: 'linear-gradient(to bottom, transparent 50%, var(--color-hoja) 50%)' }} aria-hidden />
       <div className="px-5 pb-5 pt-1">
         <p className="text-tinta-suave">{T.detail.paidOn(payer?.isMe ? T.you : (payer?.name ?? T.someone), formatDay(expense.date))}</p>
-        <h2 className="mt-4 text-[0.9375rem] font-semibold">{T.detail.split}</h2>
+        <h2 className="mt-4 text-[0.9375rem] font-semibold">
+          {expense.splitType === 'equal' ? T.detail.split : T.detail.splitBy(es.activity.splitNames[expense.splitType])}
+        </h2>
         <ul className="mt-1 divide-y divide-dashed divide-trazo">
           {shares.map((s) => {
             const person = people.get(s.userId)
@@ -87,6 +89,9 @@ export function ExpenseDetail() {
                 <span className="min-w-0 flex-1 break-words font-semibold">
                   {person?.isMe ? T.youName(person.name) : (person?.name ?? T.someone)}
                 </span>
+                {s.percentBp !== undefined && (
+                  <span className="flex-none text-[0.8125rem] text-tinta-suave tabular-nums">{basisPointsToText(s.percentBp)} %</span>
+                )}
                 <span className="flex-none font-semibold tabular-nums">{formatCents(s.amountCents)}</span>
               </li>
             )

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MAX_EXPENSE_CENTS, draftFromExpense, isUnchanged, remainderRecipients, sharesFor, validateExpense, type ExpenseDraft } from './expenseForm'
+import { MAX_EXPENSE_CENTS, draftFromExpense, isUnchanged, remainderRecipients, sharesFor, splitSummary, validateExpense, type ExpenseDraft } from './expenseForm'
 import { mulberry32, sum } from './testUtils'
 
 const members = ['c', 'a', 'd', 'b']
@@ -53,6 +53,7 @@ describe('validateExpense', () => {
         description: 'Taxi al hotel',
         paidBy: 'c',
         date: '2026-11-22',
+        splitType: 'equal',
         shares: sharesFor(2350, ['a', 'b', 'c', 'd']),
       },
     })
@@ -135,6 +136,9 @@ describe('editar: draftFromExpense e isUnchanged', () => {
       participants: ['a', 'b', 'c'],
       date: '2026-11-21',
       memberIds: members,
+      splitType: 'equal',
+      amounts: {},
+      percents: {},
     })
   })
 
@@ -169,5 +173,100 @@ describe('editar: draftFromExpense e isUnchanged', () => {
   it('un participante que ya no es miembro hace que el borrador no valide (hay que quitarlo)', () => {
     const result = validateExpense(draftFromExpense({ ...original, shares: [...original.shares, { userId: 'x', amountCents: 0 }] }, members))
     expect(result.ok).toBe(false)
+  })
+})
+
+describe('repartos por importes y por porcentajes', () => {
+  const base = (over: Partial<ExpenseDraft>): ExpenseDraft => ({
+    amountText: '120',
+    description: 'Alquiler',
+    paidBy: 'a',
+    participants: [],
+    date: '2026-11-23',
+    memberIds: ['a', 'b', 'c', 'd'],
+    ...over,
+  })
+
+  it('por importes: cada uno lo suyo; quien deja 0 o vacío no participa', () => {
+    const r = validateExpense(base({ splitType: 'amounts', amounts: { a: '40', b: '40,00', c: '40', d: '' } }))
+    expect(r).toEqual({
+      ok: true,
+      value: {
+        amountCents: 12000,
+        description: 'Alquiler',
+        paidBy: 'a',
+        date: '2026-11-23',
+        splitType: 'amounts',
+        shares: [
+          { userId: 'a', amountCents: 4000 },
+          { userId: 'b', amountCents: 4000 },
+          { userId: 'c', amountCents: 4000 },
+        ],
+      },
+    })
+  })
+
+  it('por importes: si no suman el total, error de reparto; y la diferencia se ve en vivo', () => {
+    const d = base({ splitType: 'amounts', amounts: { a: '40', b: '40', c: '20', d: '16,80' } })
+    expect(validateExpense(d)).toEqual({ ok: false, errors: { split: 'amountsMismatch' } })
+    expect(splitSummary(d)).toEqual({ kind: 'amounts', assignedCents: 11680, totalCents: 12000, diffCents: 320 })
+    expect(splitSummary({ ...d, amounts: { ...d.amounts, d: '20' } })).toEqual({ kind: 'amounts', assignedCents: 12000, totalCents: 12000, diffCents: 0 })
+    expect(splitSummary({ ...d, amounts: { ...d.amounts, d: '25' } })).toMatchObject({ diffCents: -500 }) // sobran 5 €
+  })
+
+  it('por importes: un importe mal escrito marca su fila; nadie con importe → faltan participantes', () => {
+    expect(validateExpense(base({ splitType: 'amounts', amounts: { a: '12,345', b: '107,655' } }))).toEqual({
+      ok: false,
+      errors: { shares: { a: 'invalid', b: 'invalid' } },
+    })
+    expect(validateExpense(base({ splitType: 'amounts', amounts: { a: '0', b: '' } }))).toEqual({ ok: false, errors: { participants: 'required' } })
+    expect(validateExpense(base({ splitType: 'amounts', amounts: { x: '120' } }))).toEqual({ ok: false, errors: { participants: 'invalid' } })
+  })
+
+  it('por porcentajes: 100 € al 33,33 / 33,33 / 33,34 %', () => {
+    const r = validateExpense(base({ amountText: '100', splitType: 'percent', percents: { a: '33,33', b: '33.33', c: '33,34' } }))
+    expect(r.ok && r.value).toMatchObject({
+      splitType: 'percent',
+      shares: [
+        { userId: 'a', amountCents: 3333, percentBp: 3333 },
+        { userId: 'b', amountCents: 3333, percentBp: 3333 },
+        { userId: 'c', amountCents: 3334, percentBp: 3334 },
+      ],
+    })
+  })
+
+  it('por porcentajes: tienen que sumar 100 % (resumen en vivo en puntos básicos)', () => {
+    const d = base({ splitType: 'percent', percents: { a: '40', b: '30', c: '20', d: '5' } })
+    expect(validateExpense(d)).toEqual({ ok: false, errors: { split: 'percentMismatch' } })
+    expect(splitSummary(d)).toEqual({ kind: 'percent', assignedBp: 9500, diffBp: 500 })
+    expect(validateExpense(base({ splitType: 'percent', percents: { a: '100,001' } }))).toEqual({ ok: false, errors: { shares: { a: 'invalid' } } })
+  })
+
+  it('a partes iguales no tiene resumen', () => {
+    expect(splitSummary(base({ participants: ['a'] }))).toBeNull()
+  })
+
+  it('editar: se recuperan el tipo, los importes y los porcentajes guardados, y sin tocar nada no hay cambios', () => {
+    const saved = {
+      amountCents: 10000,
+      description: 'Alquiler',
+      paidBy: 'a',
+      date: '2026-11-23',
+      splitType: 'percent' as const,
+      shares: [
+        { userId: 'b', amountCents: 3333, percentBp: 3333 },
+        { userId: 'a', amountCents: 3333, percentBp: 3333 },
+        { userId: 'c', amountCents: 3334, percentBp: 3334 },
+      ],
+    }
+    const d = draftFromExpense(saved, ['a', 'b', 'c', 'd'])
+    expect(d).toMatchObject({ splitType: 'percent', percents: { a: '33,33', b: '33,33', c: '33,34' }, participants: ['a', 'b', 'c'] })
+    const r = validateExpense(d)
+    expect(r.ok && isUnchanged(saved, r.value)).toBe(true)
+    // Mismos céntimos con otro tipo de reparto: sí es un cambio.
+    const asAmounts = validateExpense({ ...d, splitType: 'amounts', amounts: { a: '33,33', b: '33,33', c: '33,34' } })
+    expect(asAmounts.ok && isUnchanged(saved, asAmounts.value)).toBe(false)
+    const amountsSaved = { ...saved, splitType: 'amounts' as const, shares: saved.shares.map(({ userId, amountCents }) => ({ userId, amountCents })) }
+    expect(draftFromExpense(amountsSaved, ['a', 'b', 'c', 'd'])).toMatchObject({ splitType: 'amounts', amounts: { a: '33,33', b: '33,33', c: '33,34' } })
   })
 })
