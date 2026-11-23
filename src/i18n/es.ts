@@ -371,6 +371,8 @@ export const es = {
     joins: (names: string, n: number) => (n === 1 ? `entra ${names}` : `entran ${names}`),
     leaves: (names: string, n: number) => (n === 1 ? `sale ${names}` : `salen ${names}`),
     split: 'reparto cambiado',
+    splitTypeChange: (from: string, to: string) => `reparto: ${from} → ${to}`,
+    splitNames: { equal: 'a partes iguales', amounts: 'por importes', percent: 'por porcentajes' },
     youLower: 'tú',
     you2: 'ti',
     paid: { other: (amount: string, to: string) => `pagó ${amount} a ${to}`, me: (amount: string, to: string) => `pagaste ${amount} a ${to}` },

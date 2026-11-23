@@ -2,12 +2,16 @@
 // Pura y defensiva: un payload antiguo o raro nunca rompe la pantalla (campos malos se ignoran; si falta lo
 // esencial, el evento queda como «unknown» y la UI lo omite).
 
+export type SplitType = 'equal' | 'amounts' | 'percent'
+const splitType = (v: unknown): SplitType | null => (v === 'equal' || v === 'amounts' || v === 'percent' ? v : null)
+
 export type ActivityChange =
   | { field: 'amount'; from: number; to: number }
   | { field: 'description'; from: string; to: string }
   | { field: 'paidBy'; from: string; to: string }
   | { field: 'date'; from: string; to: string }
   | { field: 'participants'; added: string[]; removed: string[] }
+  | { field: 'splitType'; from: SplitType; to: SplitType }
   | { field: 'split' }
 
 export type ActivityEvent =
@@ -49,6 +53,8 @@ function changesOf(raw: unknown): ActivityChange[] {
     const removed = strings(raw.participants.removed)
     if (added.length > 0 || removed.length > 0) out.push({ field: 'participants', added, removed })
   }
+  const type = pair(raw.split_type, splitType)
+  if (type) out.push({ field: 'splitType', ...type })
   if (raw.split === true) out.push({ field: 'split' })
   return out
 }

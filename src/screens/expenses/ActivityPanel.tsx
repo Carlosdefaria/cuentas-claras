@@ -212,8 +212,10 @@ function changesText(changes: ActivityChange[], nameOf: (userId: string) => stri
             ...(c.added.length ? [T.joins(list.format(c.added.map(nameOf)), c.added.length)] : []),
             ...(c.removed.length ? [T.leaves(list.format(c.removed.map(nameOf)), c.removed.length)] : []),
           ]
+        case 'splitType':
+          return [T.splitTypeChange(T.splitNames[c.from], T.splitNames[c.to])]
         case 'split':
-          return [T.split]
+          return changes.some((x) => x.field === 'splitType') ? [] : [T.split]
       }
     })
     .join(' · ')

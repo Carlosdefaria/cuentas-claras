@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { centsToInputText, formatCents, parseEurosToCents } from './money'
+import { basisPointsToText, centsToInputText, formatCents, parseEurosToCents, parsePercentToBasisPoints } from './money'
 
 // Intl usa espacio duro (U+00A0) entre importe y símbolo; lo normalizamos para comparar.
 const fmt = (cents: number) => formatCents(cents).replace(/\s/g, ' ')
@@ -71,5 +71,23 @@ describe('centsToInputText (rellenar el campo de importe al editar)', () => {
   it('rechaza importes que no son céntimos enteros no negativos', () => {
     expect(() => centsToInputText(1.5)).toThrow()
     expect(() => centsToInputText(-1)).toThrow()
+  })
+})
+
+describe('porcentajes en puntos básicos', () => {
+  it('parsePercentToBasisPoints: hasta 2 decimales, coma o punto, de 0 a 100', () => {
+    expect(parsePercentToBasisPoints('33,33')).toBe(3333)
+    expect(parsePercentToBasisPoints('12.5')).toBe(1250)
+    expect(parsePercentToBasisPoints(' 100 ')).toBe(10000)
+    expect(parsePercentToBasisPoints('0')).toBe(0)
+    for (const bad of ['', '100,01', '101', '1,234', '-5', 'abc', '5%']) expect(parsePercentToBasisPoints(bad)).toBeNull()
+  })
+
+  it('basisPointsToText es la inversa', () => {
+    expect(basisPointsToText(3333)).toBe('33,33')
+    expect(basisPointsToText(1250)).toBe('12,5')
+    expect(basisPointsToText(4000)).toBe('40')
+    expect(basisPointsToText(5)).toBe('0,05')
+    for (const bp of [0, 1, 99, 3333, 9999, 10000]) expect(parsePercentToBasisPoints(basisPointsToText(bp))).toBe(bp)
   })
 })
