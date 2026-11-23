@@ -11,12 +11,14 @@ import { NewGroup } from './screens/groups/NewGroup'
 import { GroupDetail } from './screens/groups/GroupDetail'
 import { JoinGroup } from './screens/groups/JoinGroup'
 import { PasteInvite } from './screens/groups/PasteInvite'
-import { AddExpense } from './screens/expenses/AddExpense'
+import { AddExpense, EditExpense } from './screens/expenses/AddExpense'
 import { ExpenseDetail } from './screens/expenses/ExpenseDetail'
 import { Account } from './screens/account/Account'
 
 // «Volver» desde las pantallas de un gasto: al grupo.
 const toGroup = (params: Record<string, string | undefined>) => `/grupos/${params.id ?? ''}`
+// «Volver» desde editar: al gasto.
+const toExpense = (params: Record<string, string | undefined>) => `/grupos/${params.id ?? ''}/gastos/${params.expenseId ?? ''}`
 
 const routes = [
   {
@@ -40,6 +42,7 @@ const routes = [
           { path: '/grupos/:id', element: <GroupDetail />, handle: { back: '/' } },
           { path: '/grupos/:id/gastos/nuevo', element: <AddExpense />, handle: { back: toGroup } },
           { path: '/grupos/:id/gastos/:expenseId', element: <ExpenseDetail />, handle: { back: toGroup } },
+          { path: '/grupos/:id/gastos/:expenseId/editar', element: <EditExpense />, handle: { back: toExpense } },
           { path: '/unirse', element: <PasteInvite />, handle: { back: '/' } },
           { path: '/cuenta', element: <Account /> },
         ],

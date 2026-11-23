@@ -1,16 +1,22 @@
 // Detalle de un gasto: importe, quién pagó y cuándo, y la cuota de cada participante («saldos que no se discuten»).
+// Variante A: quien lo añadió ve «Editar» y «Borrar» al pie del boleto; los demás, quién puede cambiarlo.
 
-import { useParams } from 'react-router'
+import { useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router'
+import { Pencil, Trash2 } from 'lucide-react'
 import { es } from '../../i18n/es'
 import { useSession } from '../../auth/session'
 import { db } from '../../lib/data'
 import { listMembers } from '../../lib/groups'
-import { getExpense } from '../../lib/expenses'
-import { dataErrorMessage } from '../../lib/dataErrors'
+import { deleteExpense, getExpense, type ExpenseRow } from '../../lib/expenses'
+import { dataErrorMessage, isDataError } from '../../lib/dataErrors'
+import { localToday, whenLabel } from '../../lib/dates'
 import { peopleOf } from '../../lib/people'
 import { useAsync } from '../../lib/useAsync'
 import { formatCents } from '../../domain/money'
 import { ButtonLink, LoadError } from '../../components/ui'
+import type { Person } from '../../lib/people'
+import { DeleteExpenseSheet } from './DeleteExpenseSheet'
 import { TALON_BG } from '../../components/talonBg'
 import { PersonDot } from './PersonDot'
 
@@ -62,6 +68,7 @@ export function ExpenseDetail() {
 
   // Como al añadirlo: en el talón, cuánto y de qué; bajo el troquel, quién pagó, cuándo y el reparto.
   return (
+    <>
     <section className="rounded-xl bg-hoja shadow-[0_1px_2px_rgb(19_38_29/0.08),0_8px_24px_-12px_rgb(19_38_29/0.25)]">
       <div className={`${TALON_BG.mantequilla} rounded-t-xl px-5 pb-3 pt-4`}>
         <p className="text-[2.75rem] font-bold leading-none tracking-[-0.01em] tabular-nums">{formatCents(expense.amountCents)}</p>
@@ -87,5 +94,82 @@ export function ExpenseDetail() {
         </ul>
       </div>
     </section>
+    <Authorship groupId={id} expense={expense} author={people.get(expense.createdBy)} />
+    </>
+  )
+}
+
+/** Quién lo añadió (y si se editó) y, solo para esa persona, «Editar» y «Borrar». */
+function Authorship({ groupId, expense, author }: { groupId: string; expense: ExpenseRow; author: Person | undefined }) {
+  const navigate = useNavigate()
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const deleteButton = useRef<HTMLButtonElement>(null)
+
+  // created_at y updated_at coinciden al crearlo (misma transacción): distintos = se ha editado.
+  const edited = new Date(expense.updatedAt).getTime() - new Date(expense.createdAt).getTime() > 1000
+  const mine = author?.isMe === true
+  const who = mine ? T.detail.addedByYou : T.detail.addedBy(author?.name ?? T.someone)
+  const line = edited ? `${who} · ${T.detail.edited(whenLabel(expense.updatedAt, localToday()))}` : who
+
+  async function confirmDelete() {
+    setDeleting(true)
+    setError(null)
+    try {
+      await deleteExpense(db, expense.id)
+      navigate(`/grupos/${groupId}`, { replace: true, state: { deleted: expense.description } })
+    } catch (e) {
+      // Ya borrado (p. ej. desde otro móvil): lo mismo que si se acabara de borrar.
+      if (isDataError(e, 'not-found')) {
+        navigate(`/grupos/${groupId}`, { replace: true, state: { deleted: expense.description } })
+        return
+      }
+      setError(dataErrorMessage(e))
+      setDeleting(false)
+    }
+  }
+
+  return (
+    <>
+      <p className="mx-0.5 mt-3 text-[0.8125rem] text-tinta-suave">{line}</p>
+      {mine ? (
+        <div className="mt-3.5 flex gap-2.5">
+          <ButtonLink to={`/grupos/${groupId}/gastos/${expense.id}/editar`} state={{ fromExpense: true }} tone="secundario" className="flex-1">
+            <Pencil aria-hidden className="size-5" />
+            {T.edit.action}
+          </ButtonLink>
+          <button
+            ref={deleteButton}
+            type="button"
+            aria-haspopup="dialog"
+            onClick={() => {
+              setError(null)
+              setSheetOpen(true)
+            }}
+            className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-lg border border-sello/40 bg-white px-4 text-base font-semibold text-sello transition-colors duration-150 hover:bg-sello-claro active:bg-sello-claro"
+          >
+            <Trash2 aria-hidden className="size-5" />
+            {T.remove.action}
+          </button>
+        </div>
+      ) : (
+        <p className="mx-0.5 mt-1 text-[0.8125rem] text-tinta-suave">{T.detail.onlyCreator(author?.name ?? T.someone)}</p>
+      )}
+      {mine && (
+        <DeleteExpenseSheet
+          open={sheetOpen}
+          onClose={() => {
+            setSheetOpen(false)
+            deleteButton.current?.focus()
+          }}
+          onConfirm={() => void confirmDelete()}
+          description={expense.description}
+          amountCents={expense.amountCents}
+          deleting={deleting}
+          error={error}
+        />
+      )}
+    </>
   )
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MAX_EXPENSE_CENTS, remainderRecipients, sharesFor, validateExpense, type ExpenseDraft } from './expenseForm'
+import { MAX_EXPENSE_CENTS, draftFromExpense, isUnchanged, remainderRecipients, sharesFor, validateExpense, type ExpenseDraft } from './expenseForm'
 import { mulberry32, sum } from './testUtils'
 
 const members = ['c', 'a', 'd', 'b']
@@ -111,5 +111,63 @@ describe('validateExpense', () => {
   it('devuelve todos los errores a la vez', () => {
     const r = validateExpense(draft({ amountText: '', description: '', participants: [] }))
     expect(!r.ok && Object.keys(r.errors).sort()).toEqual(['amount', 'description', 'participants'])
+  })
+})
+
+describe('editar: draftFromExpense e isUnchanged', () => {
+  const original = {
+    amountCents: 4250,
+    description: 'Cena en Casa Pepe',
+    paidBy: 'a',
+    date: '2026-11-21',
+    shares: [
+      { userId: 'c', amountCents: 1416 },
+      { userId: 'a', amountCents: 1417 },
+      { userId: 'b', amountCents: 1417 },
+    ],
+  }
+
+  it('rellena el formulario con el gasto tal cual (importe como texto, participantes = quienes tienen cuota)', () => {
+    expect(draftFromExpense(original, members)).toEqual({
+      amountText: '42,50',
+      description: 'Cena en Casa Pepe',
+      paidBy: 'a',
+      participants: ['a', 'b', 'c'],
+      date: '2026-11-21',
+      memberIds: members,
+    })
+  })
+
+  it('sin tocar nada, validar el borrador da el mismo gasto: no hay cambios', () => {
+    const result = validateExpense(draftFromExpense(original, members))
+    expect(result.ok).toBe(true)
+    if (result.ok) expect(isUnchanged(original, result.value)).toBe(true)
+  })
+
+  it('cualquier cambio de importe, concepto, pagador, fecha o participantes cuenta', () => {
+    const base = draftFromExpense(original, members)
+    const changed: Partial<ExpenseDraft>[] = [
+      { amountText: '42,51' },
+      { description: 'Cena' },
+      { paidBy: 'b' },
+      { date: '2026-11-22' },
+      { participants: ['a', 'b'] },
+      { participants: ['a', 'b', 'c', 'd'] },
+    ]
+    for (const over of changed) {
+      const result = validateExpense({ ...base, ...over })
+      expect(result.ok).toBe(true)
+      if (result.ok) expect(isUnchanged(original, result.value)).toBe(false)
+    }
+  })
+
+  it('espacios de más en el concepto o «42,5» en vez de «42,50» no son cambios', () => {
+    const result = validateExpense({ ...draftFromExpense(original, members), description: ' Cena en Casa Pepe  ', amountText: '42,5' })
+    expect(result.ok && isUnchanged(original, result.value)).toBe(true)
+  })
+
+  it('un participante que ya no es miembro hace que el borrador no valide (hay que quitarlo)', () => {
+    const result = validateExpense(draftFromExpense({ ...original, shares: [...original.shares, { userId: 'x', amountCents: 0 }] }, members))
+    expect(result.ok).toBe(false)
   })
 })

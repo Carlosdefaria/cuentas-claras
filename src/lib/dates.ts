@@ -9,6 +9,18 @@ export function localToday(now: Date = new Date()): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
 }
 
+/** Día local (AAAA-MM-DD) de un instante ISO, p. ej. cuándo ocurrió algo en la actividad. */
+export function localDateOf(isoInstant: string): string {
+  return localToday(new Date(isoInstant))
+}
+
+const time = new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })
+
+/** Hora local «21:04» de un instante ISO. */
+export function timeOf(isoInstant: string): string {
+  return time.format(new Date(isoInstant))
+}
+
 const toUtc = (iso: string) => {
   const [y, m, d] = iso.split('-').map(Number)
   return Date.UTC(y, m - 1, d)
@@ -25,6 +37,21 @@ export function dayLabel(iso: string, today: string): string {
   if (diff === 0) return `${es.dates.today} · ${date}`
   if (diff === 1) return `${es.dates.yesterday} · ${date}`
   return date
+}
+
+/** Día corto «20 nov» (o «31 dic 2025» si es de otro año que `today`). */
+export function shortDay(iso: string, today: string): string {
+  const fmt = iso.slice(0, 4) === today.slice(0, 4) ? short : withYear
+  return fmt.format(toUtc(iso)).replace(/\./g, '')
+}
+
+/** Cuándo pasó algo, para una frase: «hoy a las 21:14», «ayer a las 9:05» o «el 20 nov». */
+export function whenLabel(isoInstant: string, today: string): string {
+  const day = localDateOf(isoInstant)
+  const diff = Math.round((toUtc(today) - toUtc(day)) / 86_400_000)
+  if (diff === 0) return es.dates.todayAt(timeOf(isoInstant))
+  if (diff === 1) return es.dates.yesterdayAt(timeOf(isoInstant))
+  return es.dates.on(shortDay(day, today))
 }
 
 /** Agrupa elementos consecutivos del mismo día (la lista ya viene ordenada). */

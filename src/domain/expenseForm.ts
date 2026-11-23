@@ -1,6 +1,6 @@
 // Formulario de gasto (reparto igual): validación y cuotas. Funciones puras; los céntimos, siempre enteros.
 
-import { parseEurosToCents } from './money.ts'
+import { centsToInputText, parseEurosToCents } from './money.ts'
 import { splitEqual } from './split.ts'
 
 /** Tope por gasto: 1.000.000,00 € (cabe de sobra en el integer de la BD). */
@@ -83,4 +83,33 @@ export function validateExpense(draft: ExpenseDraft): { ok: true; value: ValidEx
     ok: true,
     value: { amountCents: amountCents!, description, paidBy: draft.paidBy!, date: draft.date, shares: sharesFor(amountCents!, participants) },
   }
+}
+
+/** Lo que el formulario necesita de un gasto guardado para editarlo. */
+export interface SavedExpense {
+  amountCents: number
+  description: string
+  paidBy: string
+  date: string
+  shares: readonly ShareDraft[]
+}
+
+/** Borrador del formulario con un gasto guardado (editar): los participantes son quienes tienen cuota. */
+export function draftFromExpense(expense: SavedExpense, memberIds: readonly string[]): ExpenseDraft {
+  return {
+    amountText: centsToInputText(expense.amountCents),
+    description: expense.description,
+    paidBy: expense.paidBy,
+    participants: expense.shares.map((s) => s.userId).sort(),
+    date: expense.date,
+    memberIds,
+  }
+}
+
+/** ¿El gasto validado es igual al guardado? (mismo importe, concepto, pagador, fecha y cuotas). */
+export function isUnchanged(saved: SavedExpense, next: ValidExpense): boolean {
+  if (saved.amountCents !== next.amountCents || saved.description.trim() !== next.description) return false
+  if (saved.paidBy !== next.paidBy || saved.date !== next.date || saved.shares.length !== next.shares.length) return false
+  const before = new Map(saved.shares.map((s) => [s.userId, s.amountCents]))
+  return next.shares.every((s) => before.get(s.userId) === s.amountCents)
 }

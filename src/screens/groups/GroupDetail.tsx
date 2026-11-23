@@ -1,8 +1,8 @@
-// Detalle de grupo: nombre, «Invitar» (hoja inferior) y pestañas Gastos · Saldos · Miembros (PRD §7), con la pestaña
-// en la URL (?seccion=). Estados: cargando, no encontrado, error con Reintentar. Todo desde la red, sin caché.
+// Detalle de grupo: nombre, «Invitar» (hoja inferior) y pestañas Gastos · Saldos · Miembros (PRD §7) · Actividad
+// (RF-10), con la pestaña en la URL (?seccion=). Estados: cargando, no encontrado, error con Reintentar. Todo desde la red, sin caché.
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
-import { useParams, useSearchParams } from 'react-router'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { UserPlus } from 'lucide-react'
 import { es } from '../../i18n/es'
 import { useSession } from '../../auth/session'
@@ -13,6 +13,7 @@ import { peopleOf } from '../../lib/people'
 import type { Settlement } from '../../domain/balances'
 import { ExpensesPanel } from '../expenses/ExpensesPanel'
 import { BalancesPanel } from '../expenses/BalancesPanel'
+import { ActivityPanel } from '../expenses/ActivityPanel'
 import { dataErrorMessage } from '../../lib/dataErrors'
 import { inviteUrl } from '../../lib/invite'
 import { initialOf, memberTalones, talonFor } from '../../lib/talon'
@@ -52,11 +53,12 @@ export function GroupDetail() {
   return <Loaded group={data.data.group} members={data.data.members} expenses={data.data.expenses} settlements={data.data.settlements} />
 }
 
-type Tab = 'expenses' | 'balances' | 'members'
+type Tab = 'expenses' | 'balances' | 'members' | 'activity'
 const TABS: { id: Tab; label: string; param: string }[] = [
   { id: 'expenses', label: T.expenses, param: 'gastos' },
   { id: 'balances', label: T.balances, param: 'saldos' },
   { id: 'members', label: T.membersTab, param: 'miembros' },
+  { id: 'activity', label: T.activityTab, param: 'actividad' },
 ]
 
 function Loaded({ group, members, expenses, settlements }: { group: Group; members: Member[]; expenses: ExpenseRow[]; settlements: Settlement[] }) {
@@ -65,13 +67,17 @@ function Loaded({ group, members, expenses, settlements }: { group: Group; membe
   const [params, setParams] = useSearchParams()
   const [inviteOpen, setInviteOpen] = useState(false)
   const [welcome] = useState(() => params.get('bienvenida') === '1')
+  // Recién borrado un gasto (estado de la navegación desde su detalle): aviso, y se limpia para que no vuelva a salir.
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [deleted] = useState(() => (location.state as { deleted?: string } | null)?.deleted ?? null)
   const tab: Tab = TABS.find((t) => t.param === params.get('seccion'))?.id ?? 'expenses'
   const setTab = (next: Tab) => {
     const param = TABS.find((t) => t.id === next)!.param
     setParams(param === 'gastos' ? {} : { seccion: param }, { replace: true })
   }
   const inviteButton = useRef<HTMLButtonElement>(null)
-  const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ expenses: null, balances: null, members: null })
+  const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ expenses: null, balances: null, members: null, activity: null })
   const baseId = useId()
   const url = inviteUrl(window.location.origin, group.inviteCode)
 
@@ -82,6 +88,7 @@ function Loaded({ group, members, expenses, settlements }: { group: Group; membe
       const seccion = params.get('seccion')
       setParams(seccion ? { seccion } : {}, { replace: true })
     }
+    if (deleted) navigate(`${location.pathname}${location.search}`, { replace: true, state: null })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -101,6 +108,11 @@ function Loaded({ group, members, expenses, settlements }: { group: Group; membe
 
   return (
     <>
+      {deleted && (
+        <p role="status" className="mb-5 break-words rounded-lg bg-loteria-claro px-3.5 py-3 font-semibold text-loteria-hondo">
+          {es.expenses.remove.done(deleted)}
+        </p>
+      )}
       {welcome && (
         <div className="mb-5 space-y-3">
           <p role="status" className="rounded-lg bg-loteria-claro px-3.5 py-3 font-semibold text-loteria-hondo">
@@ -142,7 +154,7 @@ function Loaded({ group, members, expenses, settlements }: { group: Group; membe
             tabIndex={tab === t.id ? 0 : -1}
             onClick={() => setTab(t.id)}
             onKeyDown={onTabKey}
-            className={`h-11 flex-1 rounded-lg text-sm font-semibold transition-colors duration-150 ${
+            className={`h-11 min-w-0 flex-1 rounded-lg px-1 text-[0.8125rem] font-semibold min-[360px]:text-sm transition-colors duration-150 ${
               tab === t.id ? 'bg-hoja text-tinta shadow-[0_1px_2px_rgb(19_38_29/0.08)]' : 'text-tinta-tenue hover:text-tinta'
             }`}
           >
@@ -170,6 +182,8 @@ function Loaded({ group, members, expenses, settlements }: { group: Group; membe
               </ul>
               {members.length === 1 && <p className="mt-3 text-center text-tinta-suave">{T.alone}</p>}
             </>
+          ) : t.id === 'activity' ? (
+            tab === 'activity' && <ActivityPanel groupId={group.id} people={people} aliveExpenses={new Set(expenses.map((e) => e.id))} />
           ) : t.id === 'expenses' ? (
             <ExpensesPanel groupId={group.id} expenses={expenses} people={people} me={me} />
           ) : (

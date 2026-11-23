@@ -1,6 +1,7 @@
-// Añadir gasto (variante «Boleto»): el gasto es una participación. En el talón, el importe grande y el concepto; bajo
-// el troquel, quién pagó, la fecha y una fila por participante con su cuota en vivo (reparto igual, resto determinista).
-// Validación con validateExpense (dominio); se guarda con la RPC create_expense (atómica).
+// Añadir y editar gasto (variante «Boleto»): el gasto es una participación. En el talón, el importe grande y el concepto;
+// bajo el troquel, quién pagó, la fecha y una fila por participante con su cuota en vivo (reparto igual, resto
+// determinista). Validación con validateExpense (dominio); se guarda con la RPC create_expense o update_expense (atómicas).
+// Editar: solo quien añadió el gasto (lo comprueba también la RPC), con bloqueo optimista por updated_at.
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useBlocker, useLocation, useNavigate, useParams } from 'react-router'
@@ -9,13 +10,22 @@ import { es } from '../../i18n/es'
 import { useSession } from '../../auth/session'
 import { db } from '../../lib/data'
 import { getGroup, listMembers, type Member } from '../../lib/groups'
-import { createExpense } from '../../lib/expenses'
-import { dataErrorMessage } from '../../lib/dataErrors'
+import { createExpense, getExpense, updateExpense, type ExpenseRow } from '../../lib/expenses'
+import { dataErrorMessage, isDataError } from '../../lib/dataErrors'
 import { localToday } from '../../lib/dates'
 import { peopleOf } from '../../lib/people'
 import { useAsync } from '../../lib/useAsync'
 import { formatCents, parseEurosToCents } from '../../domain/money'
-import { DESCRIPTION_MAX, MAX_EXPENSE_CENTS, remainderRecipients, sharesFor, validateExpense, type ExpenseErrors } from '../../domain/expenseForm'
+import {
+  DESCRIPTION_MAX,
+  MAX_EXPENSE_CENTS,
+  draftFromExpense,
+  isUnchanged,
+  remainderRecipients,
+  sharesFor,
+  validateExpense,
+  type ExpenseErrors,
+} from '../../domain/expenseForm'
 import { Alert, Button, ButtonLink, LoadError } from '../../components/ui'
 import { TALON_BG } from '../../components/talonBg'
 import { PersonDot } from './PersonDot'
@@ -33,17 +43,41 @@ export function AddExpense() {
   if (data.status === 'loading') return <FormSkeleton />
   if (data.status === 'error') return <LoadError title={es.groups.detail.loadError} message={dataErrorMessage(data.error)} onRetry={data.reload} />
   if (!data.data.group) {
-    return (
-      <section className="mt-2 rounded-xl border-2 border-dashed border-trazo px-5 py-8 text-center">
-        <h1 className="text-lg font-semibold">{es.groups.detail.notFoundTitle}</h1>
-        <p className="mx-auto mt-1.5 max-w-[32ch] text-tinta-suave">{es.groups.detail.notFoundBody}</p>
-        <div className="mx-auto mt-6 max-w-xs">
-          <ButtonLink to="/">{es.groups.detail.toGroups}</ButtonLink>
-        </div>
-      </section>
-    )
+    return <Missing title={es.groups.detail.notFoundTitle} body={es.groups.detail.notFoundBody} to="/" action={es.groups.detail.toGroups} />
   }
   return <ExpenseForm groupId={data.data.group.id} members={data.data.members} />
+}
+
+export function EditExpense() {
+  const { id = '', expenseId = '' } = useParams()
+  const { state } = useSession()
+  const me = state.status === 'signed-in' ? state.user.id : null
+  const data = useAsync(async () => {
+    const [expense, members] = await Promise.all([getExpense(db, id, expenseId), listMembers(db, id)])
+    return { expense, members }
+  }, [id, expenseId])
+
+  if (data.status === 'loading') return <FormSkeleton />
+  if (data.status === 'error') return <LoadError title={T.detail.loadError} message={dataErrorMessage(data.error)} onRetry={data.reload} />
+  const { expense, members } = data.data
+  if (!expense) return <Missing title={T.detail.notFoundTitle} body={T.detail.notFoundBody} to={`/grupos/${id}`} action={T.detail.toGroup} />
+  if (expense.createdBy !== me) {
+    const author = members.find((m) => m.userId === expense.createdBy)?.name ?? T.someone
+    return <Missing title={T.edit.notAllowedTitle} body={T.edit.notAllowedBody(author)} to={`/grupos/${id}/gastos/${expense.id}`} action={T.edit.toExpense} />
+  }
+  return <ExpenseForm groupId={id} members={members} editing={expense} />
+}
+
+function Missing({ title, body, to, action }: { title: string; body: string; to: string; action: string }) {
+  return (
+    <section className="mt-2 rounded-xl border-2 border-dashed border-trazo px-5 py-8 text-center">
+      <h1 className="text-lg font-semibold">{title}</h1>
+      <p className="mx-auto mt-1.5 max-w-[32ch] text-tinta-suave">{body}</p>
+      <div className="mx-auto mt-6 max-w-xs">
+        <ButtonLink to={to}>{action}</ButtonLink>
+      </div>
+    </section>
+  )
 }
 
 const list = new Intl.ListFormat('es', { type: 'conjunction' })
@@ -59,7 +93,7 @@ function errorText(errors: ExpenseErrors) {
   }
 }
 
-function ExpenseForm({ groupId, members }: { groupId: string; members: Member[] }) {
+function ExpenseForm({ groupId, members, editing }: { groupId: string; members: Member[]; editing?: ExpenseRow }) {
   const { state } = useSession()
   const me = state.status === 'signed-in' ? state.user.id : null
   const navigate = useNavigate()
@@ -67,11 +101,24 @@ function ExpenseForm({ groupId, members }: { groupId: string; members: Member[] 
   const people = useMemo(() => peopleOf(members, me), [members, me])
   const ordered = useMemo(() => [...members].sort((a, b) => Number(b.userId === me) - Number(a.userId === me)), [members, me])
 
-  const [amountText, setAmountText] = useState('')
-  const [description, setDescription] = useState('')
-  const [paidBy, setPaidBy] = useState<string>(() => (me && people.has(me) ? me : (members[0]?.userId ?? '')))
-  const [participants, setParticipants] = useState<Set<string>>(() => new Set(members.map((m) => m.userId)))
-  const [date, setDate] = useState(() => localToday())
+  // Al editar, el formulario empieza con el gasto guardado; al añadir, vacío, pagas tú y entre todos, hoy.
+  const [initial] = useState(() =>
+    editing
+      ? draftFromExpense(editing, members.map((m) => m.userId))
+      : {
+          amountText: '',
+          description: '',
+          paidBy: me && people.has(me) ? me : (members[0]?.userId ?? ''),
+          participants: members.map((m) => m.userId),
+          date: localToday(),
+        },
+  )
+  const [amountText, setAmountText] = useState(initial.amountText)
+  const [description, setDescription] = useState(initial.description)
+  const [paidBy, setPaidBy] = useState<string>(initial.paidBy ?? '')
+  const [participants, setParticipants] = useState<Set<string>>(() => new Set(initial.participants))
+  const [date, setDate] = useState(initial.date)
+  const [conflict, setConflict] = useState(false)
   const [errors, setErrors] = useState<ExpenseErrors>({})
   const [serverError, setServerError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -82,9 +129,17 @@ function ExpenseForm({ groupId, members }: { groupId: string; members: Member[] 
   const participantsRef = useRef<HTMLFieldSetElement>(null)
   const text = errorText(errors)
 
-  // Salir con el gasto a medio escribir (p. ej. «Volver» sin querer) pide confirmación; tras guardar, no.
+  // Salir con el gasto a medio escribir o con cambios sin guardar (p. ej. «Volver» sin querer) pide confirmación;
+  // tras guardar, no.
   const saved = useRef(false)
-  const dirty = amountText.trim() !== '' || description.trim() !== ''
+  const dirty = editing
+    ? amountText !== initial.amountText ||
+      description !== initial.description ||
+      paidBy !== initial.paidBy ||
+      date !== initial.date ||
+      participants.size !== initial.participants.length ||
+      initial.participants.some((p) => !participants.has(p))
+    : amountText.trim() !== '' || description.trim() !== ''
   const blocker = useBlocker(({ currentLocation, nextLocation }) => dirty && !saved.current && currentLocation.pathname !== nextLocation.pathname)
   useEffect(() => {
     // Recargar o salir del documento (fuera del router): el aviso del navegador.
@@ -95,9 +150,9 @@ function ExpenseForm({ groupId, members }: { groupId: string; members: Member[] 
   }, [dirty])
   useEffect(() => {
     if (blocker.state !== 'blocked') return
-    if (window.confirm(F.discard)) blocker.proceed()
+    if (window.confirm(editing ? T.edit.discard : F.discard)) blocker.proceed()
     else blocker.reset()
-  }, [blocker])
+  }, [blocker, editing])
 
   // Vista previa en vivo: solo con un importe válido y alguien marcado.
   const preview = useMemo(() => {
@@ -120,6 +175,7 @@ function ExpenseForm({ groupId, members }: { groupId: string; members: Member[] 
     event.preventDefault()
     if (submitting) return
     setServerError(null)
+    setConflict(false)
     const result = validateExpense({ amountText, description, paidBy, participants: [...participants], date, memberIds: members.map((m) => m.userId) })
     if (!result.ok) {
       setErrors(result.errors)
@@ -135,17 +191,34 @@ function ExpenseForm({ groupId, members }: { groupId: string; members: Member[] 
       return
     }
     setErrors({})
+    if (editing && isUnchanged(editing, result.value)) {
+      leave() // nada que guardar
+      return
+    }
     setSubmitting(true)
     try {
-      await createExpense(db, groupId, result.value)
-      saved.current = true
-      // Desde el grupo se vuelve atrás (el detalle recarga desde la red); si se entró directo, se va al grupo.
-      if ((location.state as { fromGroup?: boolean } | null)?.fromGroup) navigate(-1)
-      else navigate(`/grupos/${groupId}`, { replace: true })
+      if (editing) await updateExpense(db, editing.id, editing.updatedAt, result.value)
+      else await createExpense(db, groupId, result.value)
+      leave()
     } catch (e) {
       setServerError(dataErrorMessage(e))
+      setConflict(isDataError(e, 'conflict'))
       setSubmitting(false)
     }
+  }
+
+  // Se vuelve atrás si se llegó desde el grupo o desde el gasto (la pantalla recarga desde la red); si se entró directo,
+  // se va al grupo (añadir) o al gasto (editar).
+  function leave() {
+    saved.current = true
+    const from = location.state as { fromGroup?: boolean; fromExpense?: boolean } | null
+    if (editing ? from?.fromExpense : from?.fromGroup) navigate(-1)
+    else navigate(editing ? `/grupos/${groupId}/gastos/${editing.id}` : `/grupos/${groupId}`, { replace: true })
+  }
+
+  function reloadAfterConflict() {
+    saved.current = true
+    navigate(`/grupos/${groupId}/gastos/${editing!.id}`, { replace: true })
   }
 
   const nameOf = (userId: string) => people.get(userId)?.name ?? T.someone
@@ -153,7 +226,7 @@ function ExpenseForm({ groupId, members }: { groupId: string; members: Member[] 
 
   return (
     <form noValidate onSubmit={onSubmit}>
-      <h1 className="sr-only">{T.add}</h1>
+      <h1 className="sr-only">{editing ? T.edit.title : T.add}</h1>
       <section className="rounded-xl bg-hoja shadow-[0_1px_2px_rgb(19_38_29/0.08),0_8px_24px_-12px_rgb(19_38_29/0.25)]">
         <div className={`${TALON_BG.mantequilla} rounded-t-xl px-5 pb-3 pt-4`}>
           <label htmlFor="gasto-importe" className="text-[0.9375rem] font-semibold text-tinta-suave">
@@ -319,9 +392,15 @@ function ExpenseForm({ groupId, members }: { groupId: string; members: Member[] 
 
       <div className="mt-4 flex flex-col gap-3">
         {serverError && <Alert>{serverError}</Alert>}
-        <Button type="submit" loading={submitting}>
-          {submitting ? T.adding : T.add}
-        </Button>
+        {conflict ? (
+          <Button type="button" onClick={reloadAfterConflict}>
+            {T.edit.reload}
+          </Button>
+        ) : (
+          <Button type="submit" loading={submitting}>
+            {editing ? (submitting ? T.edit.saving : T.edit.save) : submitting ? T.adding : T.add}
+          </Button>
+        )}
       </div>
     </form>
   )

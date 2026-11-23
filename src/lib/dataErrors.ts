@@ -18,6 +18,8 @@ export function dataErrorMessage(error: unknown): string {
       return E.forbidden
     case 'invalid':
       return E.invalid
+    case 'conflict':
+      return E.conflict
     default:
       return E.generic
   }

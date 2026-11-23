@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatCents, parseEurosToCents } from './money'
+import { centsToInputText, formatCents, parseEurosToCents } from './money'
 
 // Intl usa espacio duro (U+00A0) entre importe y símbolo; lo normalizamos para comparar.
 const fmt = (cents: number) => formatCents(cents).replace(/\s/g, ' ')
@@ -52,5 +52,24 @@ describe('formatCents', () => {
 
   it('rechaza céntimos no enteros', () => {
     expect(() => formatCents(1.5)).toThrow()
+  })
+})
+
+describe('centsToInputText (rellenar el campo de importe al editar)', () => {
+  it('euros enteros sin decimales y el resto con dos, con coma y sin separador de miles', () => {
+    expect(centsToInputText(4250)).toBe('42,50')
+    expect(centsToInputText(4205)).toBe('42,05')
+    expect(centsToInputText(4200)).toBe('42')
+    expect(centsToInputText(7)).toBe('0,07')
+    expect(centsToInputText(100_000_000)).toBe('1000000')
+  })
+
+  it('es la inversa de parseEurosToCents', () => {
+    for (const cents of [1, 10, 99, 100, 101, 123456, 99_999_999]) expect(parseEurosToCents(centsToInputText(cents))).toBe(cents)
+  })
+
+  it('rechaza importes que no son céntimos enteros no negativos', () => {
+    expect(() => centsToInputText(1.5)).toThrow()
+    expect(() => centsToInputText(-1)).toThrow()
   })
 })

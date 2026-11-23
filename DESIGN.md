@@ -218,6 +218,7 @@ troquel: punteado de 2 px en `trazo` y dos muescas semicirculares de 12 px de ra
 - **Primario**: 48 px de alto, ancho completo, verde lotería, texto blanco 600; hover/pulsado verde hondo;
   deshabilitado al 60 %; cargando con icono giratorio y texto en gerundio («Entrando…»).
 - **Peligro**: blanco con borde rojo al 40 % y texto rojo; hover fondo `sello-claro`.
+- **Destructivo**: rojo sello lleno, texto blanco. Solo para la confirmación final de un borrado («Borrar gasto»).
 
 ### Cards / Containers
 - **Tarjeta plana** (`hoja`, 12 px, sombra plana) para datos de cuenta.
@@ -296,6 +297,21 @@ los PNG (192, 512, maskable 512 con el motivo en el 80 % central, `apple-touch-i
 - **Detalle del gasto**: igual que el formulario: cifra y concepto en el talón; quién pagó, la fecha y el reparto
   (mismo orden que el formulario) bajo el troquel.
 - **Grupos**: línea «En total te deben / debes …» bajo «Tus grupos» y el saldo en cada fila, bajo «n miembros».
+
+### Editar, borrar y actividad (variante A de 3, elegida por el usuario: «Pie del boleto»)
+- **Detalle del gasto**: bajo el boleto, nota «Lo añadió X» / «Lo añadiste tú» (+ « · editado hoy a las 21:14»). Solo
+  quien lo añadió ve dos botones a medias: «Editar» (secundario, `Pencil`) y «Borrar» (peligro, `Trash2`). Los demás
+  leen «Solo X puede editarlo o borrarlo, porque lo añadió.».
+- **Editar**: el mismo boleto relleno, botón «Guardar cambios» («Guardando…»); salir con cambios pide confirmación. Si
+  otro cambio llegó antes: aviso y «Ver la versión nueva» en lugar del botón principal.
+- **Borrar**: hoja inferior (como «Invitar») con «¿Borrar este gasto?» en condensada 1.5rem, tarjeta blanca con concepto
+  e importe, qué pasa con los saldos, «Borrar gasto» (destructivo) y «Cancelar» (con el foco inicial). Al terminar,
+  vuelve al grupo con la franja `loteria-claro` «Gasto borrado: «…».».
+- **Actividad**: cuarta pestaña del control segmentado (por debajo de 360 px, etiquetas a 0.8125rem). Días como en
+  Gastos (sin total) y tarjeta plana con filas de ≥56 px: círculo del autor, «**Nombre** verbo «concepto»» (con «Tú»,
+  verbo en segunda persona), línea de detalle en `tinta-suave` (importe; cambios «36,00 € → 42,50 € · antes «Cena» ·
+  entra Marta»; borrado con el importe tachado y quién pagó) y la hora a la derecha. Las filas de un gasto vivo abren
+  su detalle. «Ver más» (secundario) cada 50.
 
 ### Participación (componente propio)
 Talón superior en papel de color con el título en condensada, línea troquelada con muescas y cuerpo en

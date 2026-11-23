@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { DataApi } from './dataApi'
-import { balancesOf, createExpense, getExpense, listExpenses, myBalancesByGroup } from './expenses'
+import { balancesOf, createExpense, deleteExpense, getExpense, listActivity, listExpenses, myBalancesByGroup, updateExpense } from './expenses'
 import { sharesFor } from '../domain/expenseForm'
 
 const G1 = '11111111-1111-4111-8111-111111111111'
@@ -14,6 +14,8 @@ const raw = (id: string, group: string, paidBy: string, amount: number, shares: 
   paid_by: paidBy,
   expense_date: '2026-11-22',
   created_at: '2026-11-22T20:00:00Z',
+  created_by: paidBy,
+  updated_at: '2026-11-22T20:00:00.123456+00:00',
   expense_shares: shares.map(([user_id, amount_cents]) => ({ user_id, amount_cents })),
 })
 
@@ -49,7 +51,7 @@ describe('saldos (siempre con computeBalances)', () => {
   it('balancesOf: 10,00 € de Ana entre Ana y Bea → Ana +5,00, Bea −5,00, Carla 0', () => {
     const [e] = [raw(E1, G1, 'ana', 1000, [['ana', 500], ['bea', 500]])].map((r) => ({
       id: r.id, groupId: G1, description: r.description, amountCents: r.amount_cents, paidBy: r.paid_by,
-      date: r.expense_date, createdAt: r.created_at, shares: r.expense_shares.map((s) => ({ userId: s.user_id, amountCents: s.amount_cents })),
+      date: r.expense_date, createdAt: r.created_at, createdBy: r.created_by, updatedAt: r.updated_at, shares: r.expense_shares.map((s) => ({ userId: s.user_id, amountCents: s.amount_cents })),
     }))
     const b = balancesOf(['ana', 'bea', 'carla'], [e], [{ fromUser: 'bea', toUser: 'ana', amountCents: 200 }])
     expect(Object.fromEntries(b)).toEqual({ ana: 300, bea: -300, carla: 0 })
@@ -93,5 +95,72 @@ describe('createExpense', () => {
         { user_id: 'carla', amount_cents: 333 },
       ],
     })
+  })
+})
+
+describe('editar, borrar y actividad', () => {
+  it('getExpense trae quién lo añadió y la versión (updated_at) para el bloqueo optimista', async () => {
+    const a = api(() => [raw(E1, G1, 'ana', 1000, [['ana', 1000]])])
+    const e = await getExpense(a, G1, E1)
+    expect(e).toMatchObject({ createdBy: 'ana', updatedAt: '2026-11-22T20:00:00.123456+00:00' })
+    expect(a.select.mock.calls[0][0]).toContain('created_by,updated_at')
+  })
+
+  it('updateExpense manda la versión leída y las cuotas nuevas a la RPC update_expense', async () => {
+    const a = api(() => null)
+    await updateExpense(a, E1, '2026-11-22T20:00:00.123456+00:00', {
+      amountCents: 900,
+      description: 'Cena',
+      paidBy: 'bea',
+      date: '2026-11-21',
+      shares: sharesFor(900, ['ana', 'bea']),
+    })
+    expect(a.rpc).toHaveBeenCalledWith('update_expense', {
+      p_expense_id: E1,
+      p_expected_updated_at: '2026-11-22T20:00:00.123456+00:00',
+      p_description: 'Cena',
+      p_amount_cents: 900,
+      p_paid_by: 'bea',
+      p_expense_date: '2026-11-21',
+      p_shares: [
+        { user_id: 'ana', amount_cents: 450 },
+        { user_id: 'bea', amount_cents: 450 },
+      ],
+    })
+  })
+
+  it('deleteExpense llama a delete_expense con el id', async () => {
+    const a = api(() => null)
+    await deleteExpense(a, E1)
+    expect(a.rpc).toHaveBeenCalledWith('delete_expense', { p_expense_id: E1 })
+  })
+
+  it('listActivity: filtrada por grupo, de la más reciente a la más antigua, en páginas y con cursor', async () => {
+    const rows = [
+      { id: 12, actor: 'ana', type: 'expense_deleted', payload: { expense_id: E1, description: 'Taxi', amount_cents: 1840, paid_by: 'bea' }, created_at: '2026-11-23T19:02:00Z' },
+      { id: 11, actor: 'bea', type: 'member_joined', payload: {}, created_at: '2026-11-22T21:41:00Z' },
+      { id: 10, actor: 'bea', type: 'raro', payload: null, created_at: '2026-11-22T21:00:00Z' },
+    ]
+    const a = api(() => rows)
+    const page = await listActivity(a, G1, { limit: 2 })
+    const path = a.select.mock.calls[0][0]
+    expect(path).toContain(`group_id=eq.${G1}`)
+    expect(path).toContain('order=id.desc')
+    expect(path).toContain('limit=3') // uno de más para saber si hay otra página
+    expect(page.items.map((i) => [i.id, i.actor, i.event.kind])).toEqual([
+      [12, 'ana', 'expense_deleted'],
+      [11, 'bea', 'member_joined'],
+    ])
+    expect(page.nextBefore).toBe(11)
+
+    await listActivity(a, G1, { limit: 2, before: 11 })
+    expect(a.select.mock.calls[1][0]).toContain('id=lt.11')
+  })
+
+  it('listActivity omite los eventos que no se entienden y no pide nada con un id no válido', async () => {
+    const a = api(() => [{ id: 3, actor: 'ana', type: 'raro', payload: null, created_at: '2026-11-22T21:00:00Z' }])
+    expect((await listActivity(a, G1)).items).toEqual([])
+    expect((await listActivity(a, G1)).nextBefore).toBeNull()
+    expect(await listActivity(a, 'x')).toEqual({ items: [], nextBefore: null })
   })
 })
