@@ -13,6 +13,7 @@ import { JoinGroup } from './screens/groups/JoinGroup'
 import { PasteInvite } from './screens/groups/PasteInvite'
 import { AddExpense, EditExpense } from './screens/expenses/AddExpense'
 import { ExpenseDetail } from './screens/expenses/ExpenseDetail'
+import { SettlementDetail } from './screens/expenses/SettlementDetail'
 import { Account } from './screens/account/Account'
 
 // «Volver» desde las pantallas de un gasto: al grupo.
@@ -43,6 +44,7 @@ const routes = [
           { path: '/grupos/:id/gastos/nuevo', element: <AddExpense />, handle: { back: toGroup } },
           { path: '/grupos/:id/gastos/:expenseId', element: <ExpenseDetail />, handle: { back: toGroup } },
           { path: '/grupos/:id/gastos/:expenseId/editar', element: <EditExpense />, handle: { back: toExpense } },
+          { path: '/grupos/:id/pagos/:settlementId', element: <SettlementDetail />, handle: { back: toGroup } },
           { path: '/unirse', element: <PasteInvite />, handle: { back: '/' } },
           { path: '/cuenta', element: <Account /> },
         ],

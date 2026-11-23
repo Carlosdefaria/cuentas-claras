@@ -1,4 +1,5 @@
-// Hoja inferior «¿Borrar este gasto?» (variante A): qué se borra, qué pasa con los saldos y la confirmación.
+// Hoja inferior de confirmación de borrado («¿Borrar este gasto?», «¿Borrar este pago?»): qué se borra, qué pasa con
+// los saldos y la confirmación.
 // Mismo <dialog> modal que «Invitar»: foco atrapado, Escape y toque fuera para cerrar (salvo mientras se borra).
 // El foco inicial va a «Cancelar», no a la acción destructiva.
 
@@ -10,7 +11,7 @@ import { Alert, Button } from '../../components/ui'
 
 const T = es.expenses.remove
 
-export function DeleteExpenseSheet({
+export function ConfirmDeleteSheet({
   open,
   onClose,
   onConfirm,
@@ -18,6 +19,7 @@ export function DeleteExpenseSheet({
   amountCents,
   deleting,
   error,
+  text = T,
 }: {
   open: boolean
   onClose: () => void
@@ -26,6 +28,8 @@ export function DeleteExpenseSheet({
   amountCents: number
   deleting: boolean
   error: string | null
+  /** Textos de la hoja (por defecto, los de borrar un gasto). */
+  text?: { title: string; body: string; confirm: string }
 }) {
   const ref = useRef<HTMLDialogElement>(null)
   const cancelRef = useRef<HTMLButtonElement>(null)
@@ -73,20 +77,20 @@ export function DeleteExpenseSheet({
           </button>
         </div>
         <h2 id={titleId} className="font-rotulo text-[1.5rem] font-bold uppercase leading-[1.05] tracking-[0.01em]">
-          {T.title}
+          {text.title}
         </h2>
         <div className="mt-3 flex items-baseline justify-between gap-3 rounded-xl bg-white px-3.5 py-3 shadow-[0_1px_2px_rgb(19_38_29/0.08)]">
           <span className="min-w-0 break-words font-semibold">{description}</span>
           <span className="flex-none font-bold tabular-nums">{formatCents(amountCents)}</span>
         </div>
         <p id={bodyId} className="mt-3 text-tinta-suave">
-          {T.body}
+          {text.body}
         </p>
         <div className="mt-5 flex flex-col gap-2.5">
           {error && <Alert>{error}</Alert>}
           <Button tone="destructivo" loading={deleting} onClick={onConfirm}>
             {!deleting && <Trash2 aria-hidden className="size-5" />}
-            {deleting ? T.deleting : T.confirm}
+            {deleting ? T.deleting : text.confirm}
           </Button>
           <button
             ref={cancelRef}

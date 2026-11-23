@@ -58,6 +58,12 @@ describe('parseActivity', () => {
     })
   })
 
+  it('pago registrado y pago borrado', () => {
+    const payload = { settlement_id: E, from_user: A, to_user: B, amount_cents: 1250 }
+    expect(parseActivity('settlement_created', payload)).toEqual({ kind: 'settlement_created', settlementId: E, fromUser: A, toUser: B, amountCents: 1250 })
+    expect(parseActivity('settlement_deleted', payload)).toEqual({ kind: 'settlement_deleted', settlementId: E, fromUser: A, toUser: B, amountCents: 1250 })
+  })
+
   it('miembro que se une y grupo creado', () => {
     expect(parseActivity('member_joined', {})).toEqual({ kind: 'member_joined' })
     expect(parseActivity('group_created', { name: 'Lisboa' })).toEqual({ kind: 'group_created', name: 'Lisboa' })
@@ -68,6 +74,7 @@ describe('parseActivity', () => {
     expect(parseActivity('expense_created', { description: 'x' })).toEqual({ kind: 'unknown' })
     expect(parseActivity('expense_created', { expense_id: E, description: 'x', amount_cents: 1.5 })).toEqual({ kind: 'unknown' })
     expect(parseActivity('settlement_created', { amount_cents: 1 })).toEqual({ kind: 'unknown' })
+    expect(parseActivity('settlement_deleted', { settlement_id: E, from_user: A, amount_cents: 1 })).toEqual({ kind: 'unknown' })
     expect(parseActivity('algo_nuevo', {})).toEqual({ kind: 'unknown' })
     const event = parseActivity('expense_updated', {
       expense_id: E,

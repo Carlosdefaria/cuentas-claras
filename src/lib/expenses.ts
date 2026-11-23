@@ -69,20 +69,77 @@ export async function getExpense(api: DataApi, groupId: string, expenseId: strin
 }
 
 interface RawSettlement {
+  id: string
   group_id: string
   from_user: string
   to_user: string
   amount_cents: number
+  settled_on: string
+  created_at: string
+  created_by: string
 }
 
-/** Pagos vivos de uno o varios grupos. Aún no hay UI para crearlos (Fase 2), pero cuentan en el saldo. */
-export async function listSettlements(api: DataApi, groupIds: string | readonly string[]): Promise<(Settlement & { groupId: string })[]> {
+/** Pago para saldar cuentas: `fromUser` pagó a `toUser`. */
+export interface SettlementRow extends Settlement {
+  id: string
+  groupId: string
+  /** AAAA-MM-DD (fecha local del pago). */
+  date: string
+  createdAt: string
+  /** Quien lo registró: el único que puede borrarlo. */
+  createdBy: string
+}
+
+const SETTLEMENT_SELECT = 'id,group_id,from_user,to_user,amount_cents,settled_on,created_at,created_by'
+
+const toSettlement = (r: RawSettlement): SettlementRow => ({
+  id: r.id,
+  groupId: r.group_id,
+  fromUser: r.from_user,
+  toUser: r.to_user,
+  amountCents: r.amount_cents,
+  date: r.settled_on,
+  createdAt: r.created_at,
+  createdBy: r.created_by,
+})
+
+/** Pagos vivos de uno o varios grupos, del más reciente al más antiguo. Cuentan en el saldo (computeBalances). */
+export async function listSettlements(api: DataApi, groupIds: string | readonly string[]): Promise<SettlementRow[]> {
   const ids = (typeof groupIds === 'string' ? [groupIds] : groupIds).filter(isUuid)
   if (ids.length === 0) return []
   const rows = await api.select<RawSettlement[]>(
-    `settlements?${groupFilter(ids)}&deleted_at=is.null&select=group_id,from_user,to_user,amount_cents`,
+    `settlements?${groupFilter(ids)}&deleted_at=is.null&select=${SETTLEMENT_SELECT}&order=settled_on.desc,created_at.desc,id.asc`,
   )
-  return rows.map((r) => ({ groupId: r.group_id, fromUser: r.from_user, toUser: r.to_user, amountCents: r.amount_cents }))
+  return rows.map(toSettlement)
+}
+
+/** Un pago vivo de un grupo, o null (no existe, borrado o no soy miembro). */
+export async function getSettlement(api: DataApi, groupId: string, settlementId: string): Promise<SettlementRow | null> {
+  if (!isUuid(groupId) || !isUuid(settlementId)) return null
+  const rows = await api.select<RawSettlement[]>(
+    `settlements?id=eq.${settlementId}&group_id=eq.${groupId}&deleted_at=is.null&select=${SETTLEMENT_SELECT}`,
+  )
+  return rows[0] ? toSettlement(rows[0]) : null
+}
+
+/** Registra un pago (RPC create_settlement: solo quien paga o quien cobra). Devuelve su id. */
+export async function createSettlement(
+  api: DataApi,
+  groupId: string,
+  payment: { fromUser: string; toUser: string; amountCents: number; date: string },
+): Promise<string> {
+  return api.rpc<string>('create_settlement', {
+    p_group_id: groupId,
+    p_from_user: payment.fromUser,
+    p_to_user: payment.toUser,
+    p_amount_cents: payment.amountCents,
+    p_settled_on: payment.date,
+  })
+}
+
+/** Borra un pago (soft delete, RPC delete_settlement: solo quien lo registró). */
+export async function deleteSettlement(api: DataApi, settlementId: string): Promise<void> {
+  await api.rpc<null>('delete_settlement', { p_settlement_id: settlementId })
 }
 
 /**

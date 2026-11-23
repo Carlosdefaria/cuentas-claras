@@ -47,3 +47,12 @@ fijó que solo quien añadió el gasto puede editarlo o borrarlo.
 CRITIQUE (⚠️ DEGRADED: single-context, sin sub-agentes por política de la sesión): detector limpio en las cinco
 pantallas tocadas; revisión visual en WebKit (iPhone 15 y 320 px). Arreglado: las pestañas «Miembros» y «Actividad» se
 tocaban a 320 px. Pendiente menor: a 320 px la pestaña activa «Actividad» queda justa contra su borde.
+
+## Pagos y saldar cuentas (RF-08, RF-09)
+
+FORM: «Saldar en Saldos», variante A de 3 (B «Pantalla Saldar cuentas», C «Un toque desde Tu saldo»). Reglas del usuario:
+registra quien paga o quien cobra; borra quien lo registró.
+
+CRITIQUE (⚠️ DEGRADED: single-context, sin sub-agentes por política de la sesión): detector limpio tras pasar la cifra
+de la hoja a la escala de DESIGN.md (2.75rem/1.875rem); revisión visual en WebKit (iPhone 15). Arreglado: el desglose de
+«Tu saldo» no cuadraba con la cifra tras un pago (ahora suma los pagos hechos y recibidos).

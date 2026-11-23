@@ -46,7 +46,8 @@ export function remainderRecipients(amountCents: number, participants: readonly 
 }
 
 const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/
-function isValidDate(value: string): boolean {
+/** AAAA-MM-DD que existe en el calendario. */
+export function isValidDate(value: string): boolean {
   const m = DATE_RE.exec(value)
   if (!m) return false
   const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])]

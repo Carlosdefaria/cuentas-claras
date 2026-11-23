@@ -161,7 +161,7 @@ pinta la barra de la app y las acciones principales, y talones de colores suaves
 
 ### Tertiary
 - **Talones** (`talon-salmon`, `talon-cielo`, `talon-menta`, `talon-mantequilla`, `talon-lila`): papel del
-  talón de una participación. Hoy: salmón en Entrar, cielo en Crear cuenta. En grupos, uno por persona.
+  talón de una participación. Hoy: salmón en Entrar, cielo en Crear cuenta y en los pagos. En grupos, uno por persona.
 
 ### Neutral
 - `papel` #e9f2ed (fondo de página), `papel-hondo` #dbe9e1 (segunda capa, esqueletos), `hoja` #fbfdfb
@@ -293,7 +293,8 @@ los PNG (192, 512, maskable 512 con el motivo en el 80 % central, `apple-touch-i
   nov», «Ayer · 21 nov», «20 nov») con su total a la derecha; filas con el círculo del pagador, concepto, «Pagó X»,
   importe en negrita y «te toca X» / «no participas» en nota. «Invitar» pasa a botón secundario.
 - **Pestaña Saldos**: participación compacta menta «Tu saldo» con «Te deben 301,82 €» (verde a favor) / «Debes …»
-  (rojo sello) / «Estás en paz» y el desglose «Has pagado X y te tocan Y»; debajo «Todo el grupo» (acreedores primero).
+  (rojo sello) / «Estás en paz» y el desglose «Has pagado X y te tocan Y» (+ «Has hecho / recibido pagos por Z»);
+  debajo «Para saldar cuentas» y «Todo el grupo» (acreedores primero).
 - **Detalle del gasto**: igual que el formulario: cifra y concepto en el talón; quién pagó, la fecha y el reparto
   (mismo orden que el formulario) bajo el troquel.
 - **Grupos**: línea «En total te deben / debes …» bajo «Tus grupos» y el saldo en cada fila, bajo «n miembros».
@@ -312,6 +313,22 @@ los PNG (192, 512, maskable 512 con el motivo en el 80 % central, `apple-touch-i
   verbo en segunda persona), línea de detalle en `tinta-suave` (importe; cambios «36,00 € → 42,50 € · antes «Cena» ·
   entra Marta»; borrado con el importe tachado y quién pagó) y la hora a la derecha. Las filas de un gasto vivo abren
   su detalle. «Ver más» (secundario) cada 50.
+
+### Pagos y saldar cuentas (variante A de 3, elegida por el usuario: «Saldar en Saldos»)
+- **Para saldar cuentas · n pagos** (pestaña Saldos, bajo «Tu saldo»): tarjeta plana con una fila de ≥60 px por pago
+  mínimo: círculo de quien paga → (flecha `ArrowRight` en `tinta-tenue`) → círculo de quien cobra, «Pagas a Ana» /
+  «Marta te paga» / «Marta paga a Ana» y el importe en negrita; en los pagos en que participas, botón «Registrar»
+  (44 px, verde lotería). Sin pagos pendientes, la sección no aparece.
+- **Registrar pago**: hoja inferior con participación compacta **cielo** («Registrar pago»): quién → quién, importe
+  (cifra 2.75rem, relleno con lo sugerido y editable) y fecha a la derecha; nota «Regístralo cuando el pago ya esté
+  hecho…»; si el importe supera lo sugerido, aviso en `tinta-suave` (no bloquea). Al terminar, franja `loteria-claro`
+  «Pago registrado: 12,50 € a Ana.» y la pantalla se actualiza sin recargar.
+- **En Gastos**: fila propia con círculo `loteria-claro` y flecha, «Pago a Ana» / «Pago a ti», «Pagaste tú» / «Pagó X» e
+  importe; no suma al total del día.
+- **Detalle del pago**: boleto con talón cielo (importe y «Pago a Ana»), bajo el troquel quién → quién y la fecha; «Lo
+  registraste tú» y «Borrar pago» (peligro, hoja de confirmación) solo para quien lo registró.
+- **Actividad**: «Tú pagaste 12,50 € a Ana», «Bea te pagó 10,00 €», «Ana registró un pago de Marta: 27,50 €», «Luis borró
+  un pago» (importe tachado · de X a Y).
 
 ### Participación (componente propio)
 Talón superior en papel de color con el título en condensada, línea troquelada con muescas y cuerpo en

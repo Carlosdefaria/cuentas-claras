@@ -1,6 +1,6 @@
 // Pestaña Actividad (RF-10, variante A): qué ha pasado en el grupo, de lo más reciente a lo más antiguo, por días,
-// con autor y hora. Gastos añadidos, editados (con el antes → después) y borrados, y quién se une. Desde la red, sin
-// caché; páginas de 50 con «Ver más». Un gasto que sigue vivo se abre tocando su fila.
+// con autor y hora. Gastos añadidos, editados (con el antes → después) y borrados, pagos registrados y borrados, y
+// quién se une. Desde la red, sin caché; páginas de 50 con «Ver más». Un gasto o pago vivo se abre tocando su fila.
 
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
@@ -23,11 +23,13 @@ export function ActivityPanel({
   groupId,
   people,
   aliveExpenses,
+  aliveSettlements,
 }: {
   groupId: string
   people: Map<string, Person>
-  /** Gastos vivos del grupo: sus filas enlazan al detalle. */
+  /** Gastos y pagos vivos del grupo: sus filas enlazan al detalle. */
   aliveExpenses: ReadonlySet<string>
+  aliveSettlements: ReadonlySet<string>
 }) {
   const first = useAsync(() => listActivity(db, groupId), [groupId])
   const [more, setMore] = useState<{ items: ActivityItem[]; nextBefore: number | null } | null>(null)
@@ -72,7 +74,7 @@ export function ActivityPanel({
           <ul className="divide-y divide-papel-hondo rounded-xl bg-hoja shadow-[0_1px_2px_rgb(19_38_29/0.08)]">
             {day.items.map((item) => (
               <li key={item.id}>
-                <Row item={item} groupId={groupId} people={people} alive={'expenseId' in item.event && aliveExpenses.has(item.event.expenseId)} today={today} />
+                <Row item={item} groupId={groupId} people={people} href={hrefOf(item, groupId, aliveExpenses, aliveSettlements)} today={today} />
               </li>
             ))}
           </ul>
@@ -96,7 +98,15 @@ export function ActivityPanel({
   )
 }
 
-function Row({ item, groupId, people, alive, today }: { item: ActivityItem; groupId: string; people: Map<string, Person>; alive: boolean; today: string }) {
+/** Enlace al detalle si el gasto o el pago sigue vivo (los añadidos y editados; nunca los borrados). */
+function hrefOf(item: ActivityItem, groupId: string, expenses: ReadonlySet<string>, settlements: ReadonlySet<string>): string | null {
+  const e = item.event
+  if ((e.kind === 'expense_created' || e.kind === 'expense_updated') && expenses.has(e.expenseId)) return `/grupos/${groupId}/gastos/${e.expenseId}`
+  if (e.kind === 'settlement_created' && settlements.has(e.settlementId)) return `/grupos/${groupId}/pagos/${e.settlementId}`
+  return null
+}
+
+function Row({ item, people, href, today }: { item: ActivityItem; groupId: string; people: Map<string, Person>; href: string | null; today: string }) {
   const actor = people.get(item.actor)
   const me = actor?.isMe === true
   const name = me ? T.you : (actor?.name ?? es.expenses.someone)
@@ -127,6 +137,27 @@ function Row({ item, groupId, people, alive, today }: { item: ActivityItem; grou
         </>
       )
       break
+    case 'settlement_created': {
+      const amount = formatCents(event.amountCents)
+      const obj = (id: string) => (people.get(id)?.isMe ? T.you2 : (people.get(id)?.name ?? es.expenses.someone))
+      if (item.actor === event.fromUser) {
+        if (me) sentence = T.paid.me(amount, obj(event.toUser))
+        else sentence = people.get(event.toUser)?.isMe ? T.paidYou(amount) : T.paid.other(amount, obj(event.toUser))
+      }
+      else if (people.get(event.fromUser)?.isMe) sentence = T.recordedYours.other(amount)
+      else sentence = me ? T.recorded.me(obj(event.fromUser), amount) : T.recorded.other(obj(event.fromUser), amount)
+      break
+    }
+    case 'settlement_deleted': {
+      const obj = (id: string) => (people.get(id)?.isMe ? T.you2 : (people.get(id)?.name ?? es.expenses.someone))
+      sentence = verb(T.settlementDeleted)
+      detail = (
+        <>
+          <s className="text-tinta-tenue">{formatCents(event.amountCents)}</s> · {T.fromTo(obj(event.fromUser), obj(event.toUser))}
+        </>
+      )
+      break
+    }
     case 'member_joined':
       sentence = verb(T.joined)
       break
@@ -150,10 +181,10 @@ function Row({ item, groupId, people, alive, today }: { item: ActivityItem; grou
     </>
   )
   const layout = 'flex min-h-14 items-start gap-3 px-3.5 py-2.5'
-  if (alive && 'expenseId' in event) {
+  if (href) {
     return (
       <Link
-        to={`/grupos/${groupId}/gastos/${event.expenseId}`}
+        to={href}
         className={`${layout} transition-colors duration-150 hover:bg-white active:bg-papel`}
       >
         {body}

@@ -12,6 +12,9 @@ test.describe.configure({ timeout: 120_000 })
 
 test.afterAll(() => cleanupUsers(created))
 
+// Fila de «Todo el grupo» (no la de «Para saldar cuentas», que también lleva el nombre).
+const balanceRow = (page: Page, name: string) => row(page, name).filter({ hasText: /Debe|Le deben|En paz/ })
+
 test('añadir un gasto: aparece en Gastos, cuadra en Saldos y en la lista de grupos de cada uno', async ({ page, browser }, info) => {
   const groupName = `Cena e2e ${Math.random().toString(36).slice(2, 6)}`
   const { bea, context, id } = await groupOfTwo(page, browser, info, groupName)
@@ -41,7 +44,7 @@ test('añadir un gasto: aparece en Gastos, cuadra en Saldos y en la lista de gru
   await expect(page).toHaveURL(`/grupos/${id}?seccion=saldos`)
   await expect(page.getByText('Te deben 5,00 €')).toBeVisible()
   await expect(page.getByText('Has pagado 10,00 € y te tocan 5,00 €.')).toBeVisible()
-  await expect(row(page, 'Bea Prueba')).toContainText('Debe 5,00 €')
+  await expect(balanceRow(page, 'Bea Prueba')).toContainText('Debe 5,00 €')
 
   // Detalle del gasto con el reparto.
   await page.getByRole('tab', { name: 'Gastos' }).click()
@@ -63,7 +66,7 @@ test('añadir un gasto: aparece en Gastos, cuadra en Saldos y en la lista de gru
   await expect(row(bea, 'Cena en Alfama')).toContainText('Pagó Ana Prueba')
   await bea.getByRole('tab', { name: 'Saldos' }).click()
   await expect(bea.getByText('Debes 5,00 €')).toBeVisible()
-  await expect(row(bea, 'Ana Prueba')).toContainText('Le deben 5,00 €')
+  await expect(balanceRow(bea, 'Ana Prueba')).toContainText('Le deben 5,00 €')
   await context.close()
 })
 
@@ -119,5 +122,5 @@ test('céntimos sobrantes, validación y error de red al guardar', async ({ page
   await page.getByRole('tab', { name: 'Saldos' }).click()
   const beaShare = lucky === 'Bea Prueba' ? '5,01 €' : '5,00 €'
   await expect(page.getByText(`Te deben ${beaShare}`)).toBeVisible()
-  await expect(row(page, 'Bea Prueba')).toContainText(`Debe ${beaShare}`)
+  await expect(balanceRow(page, 'Bea Prueba')).toContainText(`Debe ${beaShare}`)
 })

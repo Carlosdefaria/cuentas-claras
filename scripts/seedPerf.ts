@@ -111,12 +111,33 @@ async function seedActivity(groupId: string) {
   console.log(`+ Sembrada la actividad de ${GROUP}`)
 }
 
+const SETTLEMENTS = 1000
+
+/** Pagos del grupo de rendimiento (si aún no están): entre miembros al azar, distintos entre sí. */
+async function seedSettlements(groupId: string) {
+  const [{ n }] = await sql.query(`select count(*)::int as n from public.settlements where group_id = $1`, [groupId])
+  if (n >= SETTLEMENTS) return
+  await sql.transaction([
+    sql.query(`select setseed(0.42)`),
+    sql.query(
+      `with members as (select array_agg(user_id order by user_id::text) as ids from public.memberships where group_id = $1)
+       insert into public.settlements (group_id, from_user, to_user, amount_cents, settled_on, created_by)
+       select $1, m.ids[1 + (i % $2)], m.ids[1 + ((i + 1 + (i % ($2 - 1))) % $2)], 1 + floor(random() * 20000)::int,
+              current_date - (i % 365), m.ids[1 + (i % $2)]
+       from members m, generate_series(1, $3) as i`,
+      [groupId, MEMBERS, SETTLEMENTS - n],
+    ),
+  ])
+  console.log(`+ Sembrados ${SETTLEMENTS - n} pagos en ${GROUP}`)
+}
+
 async function check(groupId: string) {
   const [row] = await sql.query(
     `select
        (select count(*) from public.memberships where group_id = $1)::int as members,
        (select count(*) from public.expenses where group_id = $1)::int as expenses,
        (select count(*) from public.activities where group_id = $1)::int as activities,
+       (select count(*) from public.settlements where group_id = $1)::int as settlements,
        (select count(*) from public.expense_shares s join public.expenses e on e.id = s.expense_id
          where e.group_id = $1)::int as shares,
        (select count(*) from (
@@ -158,6 +179,7 @@ async function measure(groupId: string, label: string, query: string, params: un
 async function main() {
   const groupId = await seed()
   await seedActivity(groupId)
+  await seedSettlements(groupId)
   await check(groupId)
   console.log(`\nTiempo de ejecución en Postgres (EXPLAIN ANALYZE, 5 repeticiones, límite ${LIMIT_MS} ms):`)
   await measure(
@@ -172,6 +194,13 @@ async function main() {
     groupId,
     'expenses del grupo',
     `select id, paid_by, amount_cents, deleted_at from public.expenses where group_id = $1`,
+    [groupId],
+  )
+  await measure(
+    groupId,
+    'settlements del grupo (pagos, para saldos y la lista)',
+    `select id, from_user, to_user, amount_cents, settled_on, created_at, created_by
+     from public.settlements where group_id = $1 and deleted_at is null`,
     [groupId],
   )
   await measure(

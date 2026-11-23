@@ -1,6 +1,19 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { DataApi } from './dataApi'
-import { balancesOf, createExpense, deleteExpense, getExpense, listActivity, listExpenses, myBalancesByGroup, updateExpense } from './expenses'
+import {
+  balancesOf,
+  createExpense,
+  createSettlement,
+  deleteExpense,
+  deleteSettlement,
+  getExpense,
+  getSettlement,
+  listActivity,
+  listExpenses,
+  listSettlements,
+  myBalancesByGroup,
+  updateExpense,
+} from './expenses'
 import { sharesFor } from '../domain/expenseForm'
 
 const G1 = '11111111-1111-4111-8111-111111111111'
@@ -162,5 +175,44 @@ describe('editar, borrar y actividad', () => {
     expect((await listActivity(a, G1)).items).toEqual([])
     expect((await listActivity(a, G1)).nextBefore).toBeNull()
     expect(await listActivity(a, 'x')).toEqual({ items: [], nextBefore: null })
+  })
+})
+
+describe('pagos (settlements)', () => {
+  const S1 = '44444444-4444-4444-8444-444444444444'
+  const rawS = { id: S1, group_id: G1, from_user: 'bea', to_user: 'ana', amount_cents: 1250, settled_on: '2026-11-23', created_at: '2026-11-23T21:30:00Z', created_by: 'bea' }
+  const rowS = { id: S1, groupId: G1, fromUser: 'bea', toUser: 'ana', amountCents: 1250, date: '2026-11-23', createdAt: '2026-11-23T21:30:00Z', createdBy: 'bea' }
+
+  it('listSettlements: vivos, filtrados por grupo, con fecha y autor (más recientes primero)', async () => {
+    const a = api(() => [rawS])
+    expect(await listSettlements(a, G1)).toEqual([rowS])
+    const path = a.select.mock.calls[0][0]
+    expect(path).toContain(`group_id=eq.${G1}`)
+    expect(path).toContain('deleted_at=is.null')
+    expect(path).toContain('order=settled_on.desc,created_at.desc')
+  })
+
+  it('getSettlement: uno vivo del grupo, o null; ids no válidos no llegan a la red', async () => {
+    const a = api(() => [rawS])
+    expect(await getSettlement(a, G1, S1)).toEqual(rowS)
+    expect(a.select.mock.calls[0][0]).toContain(`id=eq.${S1}&group_id=eq.${G1}&deleted_at=is.null`)
+    expect(await getSettlement(api(() => []), G1, S1)).toBeNull()
+    const b = api(() => [])
+    expect(await getSettlement(b, G1, 'x')).toBeNull()
+    expect(b.select).not.toHaveBeenCalled()
+  })
+
+  it('createSettlement y deleteSettlement llaman a sus RPC', async () => {
+    const a = api(() => null)
+    await createSettlement(a, G1, { fromUser: 'bea', toUser: 'ana', amountCents: 1250, date: '2026-11-23' })
+    expect(a.rpc).toHaveBeenCalledWith('create_settlement', {
+      p_group_id: G1,
+      p_from_user: 'bea',
+      p_to_user: 'ana',
+      p_amount_cents: 1250,
+      p_settled_on: '2026-11-23',
+    })
+    await deleteSettlement(a, S1)
+    expect(a.rpc).toHaveBeenCalledWith('delete_settlement', { p_settlement_id: S1 })
   })
 })
