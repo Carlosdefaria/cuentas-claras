@@ -95,8 +95,19 @@ Se construye por fases (PRD §11). Plan de trabajo: Fase 1 = auth, grupos, gasto
   `app_private.check_expense_input` (también las usa `create_expense`).
 - Actividad (RF-10): pestaña «Actividad» (`?seccion=actividad`), `listActivity` (filtrada por grupo, `order=id.desc`,
   páginas de 50 con cursor `id=lt.`) y `parseActivity` (`src/domain/activity.ts`, defensiva: lo que no entiende se omite).
-- Saldos **solo** con `computeBalances` (`src/lib/expenses.ts`: `balancesOf`, `myBalancesByGroup`); pagos (settlements)
-  ya cuentan aunque aún no haya UI para crearlos.
+- Saldos **solo** con `computeBalances` (`src/lib/expenses.ts`: `balancesOf`, `myBalancesByGroup`); los pagos cuentan.
+
+### Pagos y saldar cuentas (Fase 2)
+- Pagos mínimos con `simplifyDebts` (`src/domain/simplify.ts`: voraz, mayor deudor ↔ mayor acreedor, empates por id,
+  ≤ n−1 pagos). Formulario con `validateSettlement` (`src/domain/settlementForm.ts`).
+- Migración 0008: RPC `create_settlement` (**solo quien paga o quien cobra**, ambos miembros y distintos, tope
+  1.000.000,00 €) y `delete_settlement` (soft delete, **solo quien lo registró**); actividad `settlement_created` /
+  `settlement_deleted` (este tipo se añadió al CHECK de `activities`).
+- UI (variante A): «Para saldar cuentas» en la pestaña Saldos con «Registrar» en los pagos en que participas (hoja
+  `SettlementSheet`, importe editable: pagos parciales; aviso si es más de lo sugerido); los pagos van en la lista de
+  Gastos (sin sumar al total del día) y tienen detalle en `/grupos/:id/pagos/:settlementId` con «Borrar pago».
+- Avisos de una acción hecha en el grupo: estado de navegación `{ notice }` (p. ej. «Gasto borrado», «Pago borrado») o
+  `onChanged` desde la propia pantalla, que recarga con `useAsync().reload(true)` (sin quitar lo que hay en pantalla).
 - Lecturas de `expenses`/`settlements` **siempre con filtro de grupo** (`group_id=eq.` / `in.(…)`): sin él, RLS recorre
   la tabla entera (en `test` hay 5.000 gastos sintéticos de `db:perf`) y la lista de grupos tardaba segundos.
 - Fechas de gasto en fecha local (`src/lib/dates.ts`); etiquetas «Hoy · 22 nov», «Ayer · 21 nov».
@@ -130,7 +141,7 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
   - `.neon` queda fijado en `production`; no cambiar con `neon checkout` sin `--no-env-pull`.
 
 ## Antes de tocar production
-- **No se aplica ninguna migración en production tal cual.** Antes, las migraciones 0001–0004 (y las posteriores: 0005, 0006, 0007…) se consolidarán en
+- **No se aplica ninguna migración en production tal cual.** Antes, las migraciones 0001–0004 (y las posteriores: 0005, 0006, 0007, 0008…) se consolidarán en
   una **línea base limpia** (sin el intento fallido 0003 y con el parche de `current_user_id()` ya integrado),
   que se probará en una **rama nueva creada desde production** (`npm run test:db` completo, incluido el test en
   frío) y cuyo esquema se comparará con el de `test` (`neon branches schema-diff` o equivalente) antes de aplicarla.
@@ -160,7 +171,7 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
   Los e2e lo esquivan esperando la ventana (`retryIfRateLimited`).
 
 ## Tests
-- La lógica de dominio (`src/domain/`: `money.ts`, `split.ts`, `balances.ts`; después la simplificación) son funciones puras con tests Vitest (`*.test.ts` al lado).
+- La lógica de dominio (`src/domain/`: `money.ts`, `split.ts`, `balances.ts`, `simplify.ts`, `settlementForm.ts`, `activity.ts`) son funciones puras con tests Vitest (`*.test.ts` al lado).
 - Tests primero: ningún cambio en esa lógica sin test que lo cubra.
 
 ## Convenciones

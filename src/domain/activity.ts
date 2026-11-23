@@ -14,6 +14,8 @@ export type ActivityEvent =
   | { kind: 'expense_created'; expenseId: string; description: string; amountCents: number }
   | { kind: 'expense_updated'; expenseId: string; description: string; amountCents: number; changes: ActivityChange[] }
   | { kind: 'expense_deleted'; expenseId: string; description: string; amountCents: number; paidBy: string | null }
+  | { kind: 'settlement_created'; settlementId: string; fromUser: string; toUser: string; amountCents: number }
+  | { kind: 'settlement_deleted'; settlementId: string; fromUser: string; toUser: string; amountCents: number }
   | { kind: 'member_joined' }
   | { kind: 'group_created'; name: string | null }
   | { kind: 'unknown' }
@@ -56,6 +58,15 @@ export function parseActivity(type: string, payload: unknown): ActivityEvent {
   if (type === 'member_joined') return { kind: 'member_joined' }
   if (type === 'group_created') return { kind: 'group_created', name: str(p?.name) }
   if (!p) return { kind: 'unknown' }
+
+  if (type === 'settlement_created' || type === 'settlement_deleted') {
+    const settlementId = str(p.settlement_id)
+    const fromUser = str(p.from_user)
+    const toUser = str(p.to_user)
+    const amount = cents(p.amount_cents)
+    if (settlementId === null || fromUser === null || toUser === null || amount === null) return { kind: 'unknown' }
+    return { kind: type, settlementId, fromUser, toUser, amountCents: amount }
+  }
 
   const expenseId = str(p.expense_id)
   const description = str(p.description)

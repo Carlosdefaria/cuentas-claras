@@ -16,7 +16,7 @@ import { useAsync } from '../../lib/useAsync'
 import { formatCents } from '../../domain/money'
 import { ButtonLink, LoadError } from '../../components/ui'
 import type { Person } from '../../lib/people'
-import { DeleteExpenseSheet } from './DeleteExpenseSheet'
+import { ConfirmDeleteSheet } from './ConfirmDeleteSheet'
 import { TALON_BG } from '../../components/talonBg'
 import { PersonDot } from './PersonDot'
 
@@ -118,11 +118,11 @@ function Authorship({ groupId, expense, author }: { groupId: string; expense: Ex
     setError(null)
     try {
       await deleteExpense(db, expense.id)
-      navigate(`/grupos/${groupId}`, { replace: true, state: { deleted: expense.description } })
+      navigate(`/grupos/${groupId}`, { replace: true, state: { notice: T.remove.done(expense.description) } })
     } catch (e) {
       // Ya borrado (p. ej. desde otro móvil): lo mismo que si se acabara de borrar.
       if (isDataError(e, 'not-found')) {
-        navigate(`/grupos/${groupId}`, { replace: true, state: { deleted: expense.description } })
+        navigate(`/grupos/${groupId}`, { replace: true, state: { notice: T.remove.done(expense.description) } })
         return
       }
       setError(dataErrorMessage(e))
@@ -157,7 +157,7 @@ function Authorship({ groupId, expense, author }: { groupId: string; expense: Ex
         <p className="mx-0.5 mt-1 text-[0.8125rem] text-tinta-suave">{T.detail.onlyCreator(author?.name ?? T.someone)}</p>
       )}
       {mine && (
-        <DeleteExpenseSheet
+        <ConfirmDeleteSheet
           open={sheetOpen}
           onClose={() => {
             setSheetOpen(false)

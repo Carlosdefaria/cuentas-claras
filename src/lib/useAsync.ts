@@ -7,13 +7,17 @@ export type AsyncState<T> =
   | { status: 'ready'; data: T }
   | { status: 'error'; error: unknown }
 
-export function useAsync<T>(load: () => Promise<T>, deps: DependencyList): AsyncState<T> & { reload: () => void } {
+/**
+ * `reload()` vuelve a pedir los datos mostrando la carga; `reload(true)` los pide sin quitar los que hay en pantalla
+ * (p. ej. tras registrar un pago: la pantalla se queda y se actualiza al llegar la respuesta).
+ */
+export function useAsync<T>(load: () => Promise<T>, deps: DependencyList): AsyncState<T> & { reload: (silent?: boolean) => void } {
   const [state, setState] = useState<AsyncState<T>>({ status: 'loading' })
-  const [attempt, setAttempt] = useState(0)
+  const [attempt, setAttempt] = useState({ n: 0, silent: false })
 
   useEffect(() => {
     let alive = true
-    setState({ status: 'loading' })
+    if (!attempt.silent) setState({ status: 'loading' })
     load().then(
       (data) => alive && setState({ status: 'ready', data }),
       (error: unknown) => alive && setState({ status: 'error', error }),
@@ -24,6 +28,6 @@ export function useAsync<T>(load: () => Promise<T>, deps: DependencyList): Async
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, attempt])
 
-  const reload = useCallback(() => setAttempt((a) => a + 1), [])
+  const reload = useCallback((silent = false) => setAttempt((a) => ({ n: a.n + 1, silent })), [])
   return { ...state, reload }
 }

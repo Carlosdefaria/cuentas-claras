@@ -8,9 +8,9 @@ import { es } from '../../i18n/es'
 import { useSession } from '../../auth/session'
 import { db } from '../../lib/data'
 import { getGroup, listMembers, type GroupDetail as Group, type Member } from '../../lib/groups'
-import { balancesOf, listExpenses, listSettlements, type ExpenseRow } from '../../lib/expenses'
+import { balancesOf, listExpenses, listSettlements, type ExpenseRow, type SettlementRow } from '../../lib/expenses'
 import { peopleOf } from '../../lib/people'
-import type { Settlement } from '../../domain/balances'
+import { formatCents } from '../../domain/money'
 import { ExpensesPanel } from '../expenses/ExpensesPanel'
 import { BalancesPanel } from '../expenses/BalancesPanel'
 import { ActivityPanel } from '../expenses/ActivityPanel'
@@ -27,6 +27,15 @@ const T = es.groups.detail
 
 export function GroupDetail() {
   const { id = '' } = useParams()
+  // Aviso de una acción recién hecha: llega en el estado de la navegación (p. ej. «Gasto borrado» desde su detalle) o
+  // de esta misma pantalla (p. ej. «Pago registrado»). Se limpia de la navegación para que no vuelva a salir.
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [notice, setNotice] = useState<string | null>(() => (location.state as { notice?: string } | null)?.notice ?? null)
+  useEffect(() => {
+    if ((location.state as { notice?: string } | null)?.notice) navigate(`${location.pathname}${location.search}`, { replace: true, state: null })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const data = useAsync(async () => {
     const [group, members, expenses, settlements] = await Promise.all([
       getGroup(db, id),
@@ -50,7 +59,20 @@ export function GroupDetail() {
       </section>
     )
   }
-  return <Loaded group={data.data.group} members={data.data.members} expenses={data.data.expenses} settlements={data.data.settlements} />
+  return (
+    <Loaded
+      group={data.data.group}
+      members={data.data.members}
+      expenses={data.data.expenses}
+      settlements={data.data.settlements}
+      notice={notice}
+      onChanged={(message) => {
+        setNotice(message)
+        window.scrollTo({ top: 0 })
+        data.reload(true) // sin quitar la pantalla: se actualiza al llegar los datos
+      }}
+    />
+  )
 }
 
 type Tab = 'expenses' | 'balances' | 'members' | 'activity'
@@ -61,16 +83,26 @@ const TABS: { id: Tab; label: string; param: string }[] = [
   { id: 'activity', label: T.activityTab, param: 'actividad' },
 ]
 
-function Loaded({ group, members, expenses, settlements }: { group: Group; members: Member[]; expenses: ExpenseRow[]; settlements: Settlement[] }) {
+function Loaded({
+  group,
+  members,
+  expenses,
+  settlements,
+  notice,
+  onChanged,
+}: {
+  group: Group
+  members: Member[]
+  expenses: ExpenseRow[]
+  settlements: SettlementRow[]
+  notice: string | null
+  onChanged: (notice: string) => void
+}) {
   const { state } = useSession()
   const me = state.status === 'signed-in' ? state.user.id : null
   const [params, setParams] = useSearchParams()
   const [inviteOpen, setInviteOpen] = useState(false)
   const [welcome] = useState(() => params.get('bienvenida') === '1')
-  // Recién borrado un gasto (estado de la navegación desde su detalle): aviso, y se limpia para que no vuelva a salir.
-  const location = useLocation()
-  const navigate = useNavigate()
-  const [deleted] = useState(() => (location.state as { deleted?: string } | null)?.deleted ?? null)
   const tab: Tab = TABS.find((t) => t.param === params.get('seccion'))?.id ?? 'expenses'
   const setTab = (next: Tab) => {
     const param = TABS.find((t) => t.id === next)!.param
@@ -88,7 +120,6 @@ function Loaded({ group, members, expenses, settlements }: { group: Group; membe
       const seccion = params.get('seccion')
       setParams(seccion ? { seccion } : {}, { replace: true })
     }
-    if (deleted) navigate(`${location.pathname}${location.search}`, { replace: true, state: null })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -108,11 +139,13 @@ function Loaded({ group, members, expenses, settlements }: { group: Group; membe
 
   return (
     <>
-      {deleted && (
-        <p role="status" className="mb-5 break-words rounded-lg bg-loteria-claro px-3.5 py-3 font-semibold text-loteria-hondo">
-          {es.expenses.remove.done(deleted)}
-        </p>
-      )}
+      <div aria-live="polite">
+        {notice && (
+          <p role="status" className="mb-5 break-words rounded-lg bg-loteria-claro px-3.5 py-3 font-semibold text-loteria-hondo">
+            {notice}
+          </p>
+        )}
+      </div>
       {welcome && (
         <div className="mb-5 space-y-3">
           <p role="status" className="rounded-lg bg-loteria-claro px-3.5 py-3 font-semibold text-loteria-hondo">
@@ -183,11 +216,27 @@ function Loaded({ group, members, expenses, settlements }: { group: Group; membe
               {members.length === 1 && <p className="mt-3 text-center text-tinta-suave">{T.alone}</p>}
             </>
           ) : t.id === 'activity' ? (
-            tab === 'activity' && <ActivityPanel groupId={group.id} people={people} aliveExpenses={new Set(expenses.map((e) => e.id))} />
+            tab === 'activity' && <ActivityPanel groupId={group.id} people={people} aliveExpenses={new Set(expenses.map((e) => e.id))}
+                aliveSettlements={new Set(settlements.map((x) => x.id))}
+              />
           ) : t.id === 'expenses' ? (
-            <ExpensesPanel groupId={group.id} expenses={expenses} people={people} me={me} />
+            <ExpensesPanel groupId={group.id} expenses={expenses} settlements={settlements} people={people} me={me} />
           ) : (
-            <BalancesPanel balances={balances} people={people} me={me} expenses={expenses} settlements={settlements} />
+            <BalancesPanel
+              groupId={group.id}
+              balances={balances}
+              people={people}
+              me={me}
+              expenses={expenses}
+              settlements={settlements}
+              onSettled={(p, cents) =>
+                onChanged(
+                  p.to.isMe
+                    ? es.expenses.settlement.doneToYou(formatCents(cents), p.from.name)
+                    : es.expenses.settlement.done(formatCents(cents), p.to.name),
+                )
+              }
+            />
           )}
         </div>
       ))}
