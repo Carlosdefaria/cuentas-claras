@@ -1,6 +1,7 @@
 // Gastos y saldos por la Data API (RLS: solo grupos de los que soy miembro). Los saldos no se guardan: se calculan
 // siempre con computeBalances (src/domain/balances.ts), la única lógica de saldo de la app.
 
+import { parseActivity, type ActivityEvent } from '../domain/activity'
 import { computeBalances, type Settlement } from '../domain/balances'
 import type { ValidExpense } from '../domain/expenseForm'
 import type { DataApi } from './dataApi'
@@ -14,6 +15,10 @@ export interface ExpenseRow {
   paidBy: string
   date: string
   createdAt: string
+  /** Quien lo añadió: el único que puede editarlo o borrarlo. */
+  createdBy: string
+  /** Versión para el bloqueo optimista de update_expense (se manda tal cual la devolvió la Data API). */
+  updatedAt: string
   shares: { userId: string; amountCents: number }[]
 }
 
@@ -25,10 +30,12 @@ interface RawExpense {
   paid_by: string
   expense_date: string
   created_at: string
+  created_by: string
+  updated_at: string
   expense_shares: { user_id: string; amount_cents: number }[]
 }
 
-const EXPENSE_SELECT = 'id,group_id,description,amount_cents,paid_by,expense_date,created_at,expense_shares(user_id,amount_cents)'
+const EXPENSE_SELECT = 'id,group_id,description,amount_cents,paid_by,expense_date,created_at,created_by,updated_at,expense_shares(user_id,amount_cents)'
 
 const toExpense = (r: RawExpense): ExpenseRow => ({
   id: r.id,
@@ -38,6 +45,8 @@ const toExpense = (r: RawExpense): ExpenseRow => ({
   paidBy: r.paid_by,
   date: r.expense_date,
   createdAt: r.created_at,
+  createdBy: r.created_by,
+  updatedAt: r.updated_at,
   shares: r.expense_shares.map((s) => ({ userId: s.user_id, amountCents: s.amount_cents })),
 })
 
@@ -125,4 +134,65 @@ export async function createExpense(api: DataApi, groupId: string, expense: Vali
     p_expense_date: expense.date,
     p_shares: expense.shares.map((s) => ({ user_id: s.userId, amount_cents: s.amountCents })),
   })
+}
+
+/**
+ * Edita un gasto y sustituye sus cuotas en una sola transacción (RPC update_expense). Solo quien lo añadió.
+ * `expectedUpdatedAt` es la versión que se leyó: si alguien lo cambió después, la RPC responde 40001 (kind 'conflict').
+ */
+export async function updateExpense(api: DataApi, expenseId: string, expectedUpdatedAt: string, expense: ValidExpense): Promise<string> {
+  return api.rpc<string>('update_expense', {
+    p_expense_id: expenseId,
+    p_expected_updated_at: expectedUpdatedAt,
+    p_description: expense.description,
+    p_amount_cents: expense.amountCents,
+    p_paid_by: expense.paidBy,
+    p_expense_date: expense.date,
+    p_shares: expense.shares.map((s) => ({ user_id: s.userId, amount_cents: s.amountCents })),
+  })
+}
+
+/** Borra un gasto (soft delete, RPC delete_expense). Solo quien lo añadió. */
+export async function deleteExpense(api: DataApi, expenseId: string): Promise<void> {
+  await api.rpc<null>('delete_expense', { p_expense_id: expenseId })
+}
+
+export interface ActivityItem {
+  id: number
+  actor: string
+  createdAt: string
+  event: Exclude<ActivityEvent, { kind: 'unknown' }>
+}
+
+interface RawActivity {
+  id: number
+  actor: string
+  type: string
+  payload: unknown
+  created_at: string
+}
+
+export const ACTIVITY_PAGE = 50
+
+/**
+ * Actividad del grupo, de la más reciente a la más antigua, en páginas (cursor: id de la última fila leída).
+ * Siempre filtrada por grupo. Los eventos que no se entienden se omiten.
+ */
+export async function listActivity(
+  api: DataApi,
+  groupId: string,
+  { limit = ACTIVITY_PAGE, before }: { limit?: number; before?: number } = {},
+): Promise<{ items: ActivityItem[]; nextBefore: number | null }> {
+  if (!isUuid(groupId)) return { items: [], nextBefore: null }
+  const cursor = before === undefined ? '' : `&id=lt.${Math.trunc(before)}`
+  const rows = await api.select<RawActivity[]>(
+    `activities?group_id=eq.${groupId}${cursor}&select=id,actor,type,payload,created_at&order=id.desc&limit=${limit + 1}`,
+  )
+  const page = rows.slice(0, limit)
+  const items: ActivityItem[] = []
+  for (const r of page) {
+    const event = parseActivity(r.type, r.payload)
+    if (event.kind !== 'unknown') items.push({ id: r.id, actor: r.actor, createdAt: r.created_at, event })
+  }
+  return { items, nextBefore: rows.length > limit ? (page.at(-1)?.id ?? null) : null }
 }

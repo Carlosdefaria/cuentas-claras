@@ -64,6 +64,7 @@ describe('kindFor', () => {
     [403, '42501', 'forbidden'],
     [400, '22023', 'invalid'],
     [400, '23514', 'invalid'],
+    [400, '40001', 'conflict'],
     [401, 'PGRST301', 'auth'],
     [401, 'PGRST302', 'auth'],
     [503, undefined, 'unavailable'],

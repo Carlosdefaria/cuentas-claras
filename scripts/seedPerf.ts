@@ -6,6 +6,7 @@
 // Grupo "perf-50x5000": 50 miembros sintéticos y 5.000 gastos con cuotas de reparto igual
 // (cada gasto entre el pagador y ~la mitad del grupo; resto determinista por user_id).
 // Es idempotente: si el grupo ya tiene 5.000 gastos, no vuelve a sembrar.
+// La actividad (un expense_created por gasto y un member_joined por miembro) se siembra aparte, también idempotente.
 
 import { testSql } from './testDb.ts'
 
@@ -89,11 +90,33 @@ async function seed(): Promise<string> {
   return groupId
 }
 
+/** Actividad del grupo de rendimiento: un evento por gasto y por miembro (si aún no está). */
+async function seedActivity(groupId: string) {
+  const [{ n }] = await sql.query(`select count(*)::int as n from public.activities where group_id = $1`, [groupId])
+  if (n >= EXPENSES) return
+  await sql.transaction([
+    sql.query(`delete from public.activities where group_id = $1`, [groupId]),
+    sql.query(
+      `insert into public.activities (group_id, actor, type, payload, created_at)
+       select $1, m.user_id, 'member_joined', '{}'::jsonb, m.joined_at from public.memberships m where m.group_id = $1
+       union all
+       select $1, e.created_by, 'expense_created',
+              jsonb_build_object('expense_id', e.id, 'description', e.description, 'amount_cents', e.amount_cents),
+              e.expense_date::timestamptz
+       from public.expenses e where e.group_id = $1
+       order by 5`,
+      [groupId],
+    ),
+  ])
+  console.log(`+ Sembrada la actividad de ${GROUP}`)
+}
+
 async function check(groupId: string) {
   const [row] = await sql.query(
     `select
        (select count(*) from public.memberships where group_id = $1)::int as members,
        (select count(*) from public.expenses where group_id = $1)::int as expenses,
+       (select count(*) from public.activities where group_id = $1)::int as activities,
        (select count(*) from public.expense_shares s join public.expenses e on e.id = s.expense_id
          where e.group_id = $1)::int as shares,
        (select count(*) from (
@@ -134,6 +157,7 @@ async function measure(groupId: string, label: string, query: string, params: un
 
 async function main() {
   const groupId = await seed()
+  await seedActivity(groupId)
   await check(groupId)
   console.log(`\nTiempo de ejecución en Postgres (EXPLAIN ANALYZE, 5 repeticiones, límite ${LIMIT_MS} ms):`)
   await measure(
@@ -148,6 +172,13 @@ async function main() {
     groupId,
     'expenses del grupo',
     `select id, paid_by, amount_cents, deleted_at from public.expenses where group_id = $1`,
+    [groupId],
+  )
+  await measure(
+    groupId,
+    'actividad del grupo (página de 50, como la pestaña Actividad)',
+    `select id, actor, type, payload, created_at from public.activities
+     where group_id = $1 order by id desc limit 50`,
     [groupId],
   )
 }

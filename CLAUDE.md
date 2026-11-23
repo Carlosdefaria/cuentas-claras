@@ -86,7 +86,15 @@ Se construye por fases (PRD §11). Plan de trabajo: Fase 1 = auth, grupos, gasto
 
 ### Gastos y saldos
 - Formulario: `src/domain/expenseForm.ts` (`validateExpense`, `sharesFor` = `splitEqual`, `remainderRecipients`; tope
-  1.000.000,00 €). Se guarda con la RPC `create_expense` (atómica, valida miembros y suma). Solo crear: editar/borrar después.
+  1.000.000,00 €; `draftFromExpense` e `isUnchanged` para editar). Se guarda con la RPC `create_expense` (atómica, valida
+  miembros y suma). El mismo formulario edita (`/grupos/:id/gastos/:expenseId/editar`, `EditExpense`).
+- Editar y borrar (migración 0007): **solo quien añadió el gasto** (`expenses.created_by`), ni el admin ni el pagador.
+  RPC `update_expense` (sustituye cuotas en la misma transacción; bloqueo optimista con el `updated_at` leído → `40001`,
+  `DataApiError.kind = 'conflict'`; sin cambios no escribe) y `delete_expense` (soft delete). Ambas registran
+  `expense_updated` (con `changes` antes/después) / `expense_deleted` en `activities`. Validaciones comunes en
+  `app_private.check_expense_input` (también las usa `create_expense`).
+- Actividad (RF-10): pestaña «Actividad» (`?seccion=actividad`), `listActivity` (filtrada por grupo, `order=id.desc`,
+  páginas de 50 con cursor `id=lt.`) y `parseActivity` (`src/domain/activity.ts`, defensiva: lo que no entiende se omite).
 - Saldos **solo** con `computeBalances` (`src/lib/expenses.ts`: `balancesOf`, `myBalancesByGroup`); pagos (settlements)
   ya cuentan aunque aún no haya UI para crearlos.
 - Lecturas de `expenses`/`settlements` **siempre con filtro de grupo** (`group_id=eq.` / `in.(…)`): sin él, RLS recorre
@@ -122,7 +130,7 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
   - `.neon` queda fijado en `production`; no cambiar con `neon checkout` sin `--no-env-pull`.
 
 ## Antes de tocar production
-- **No se aplica ninguna migración en production tal cual.** Antes, las migraciones 0001–0004 (y las posteriores: 0005, 0006…) se consolidarán en
+- **No se aplica ninguna migración en production tal cual.** Antes, las migraciones 0001–0004 (y las posteriores: 0005, 0006, 0007…) se consolidarán en
   una **línea base limpia** (sin el intento fallido 0003 y con el parche de `current_user_id()` ya integrado),
   que se probará en una **rama nueva creada desde production** (`npm run test:db` completo, incluido el test en
   frío) y cuyo esquema se comparará con el de `test` (`neon branches schema-diff` o equivalente) antes de aplicarla.
@@ -161,6 +169,10 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
 - BD (solo rama `test`, vía `scripts/testDb.ts`): `npm run db:migrate` (registra en `app_migrations.applied`; no se editan migraciones aplicadas, se crea una nueva), `npm run test:db` (RLS/RPC), `npm run db:perf` (50 miembros × 5.000 gastos + EXPLAIN ANALYZE).
 - El contenedor cloud solo permite HTTPS: se usa el driver HTTP de Neon contra el host del endpoint de test (`NODE_USE_ENV_PROXY=1`, ya incluido en los scripts).
 - CLI de Neon en el contenedor cloud: `NEON_API_KEY=proxy-injected neon …` (el proxy inyecta la key real).
+- **Tras una migración que cree o cambie funciones/tablas expuestas**, refrescar la caché de esquema de la Data API de
+  `test` o PostgREST responde `404 PGRST202` (la app muestra «Algo ha fallado»):
+  `NEON_API_KEY=proxy-injected NODE_USE_ENV_PROXY=1 neon data-api refresh-schema --branch test --database neondb`
+  (`NOTIFY pgrst` no llega a la Data API de Neon).
 - `npm run test:e2e` levanta `npm run dev` (5173) y el build con `vite preview` (4173, pruebas `e2e/pwa.spec.ts`).
   Chromium necesita `--ignore-certificate-errors` para registrar el SW con el certificado autofirmado (ya en la config).
 - `npm run dev` sirve en `https://localhost:5173` con el proxy de Auth; en el contenedor cloud lanzarlo con

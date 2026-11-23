@@ -9,7 +9,8 @@ related_targets: ["src/screens/groups/GroupDetail.tsx","src/screens/groups/Group
 
 Modo: Operate. Construcción: code-led (variantes en imagen; el usuario eligió la A de 3, «Boleto»).
 Alcance: `/grupos/:id/gastos/nuevo`, `/grupos/:id/gastos/:expenseId`, pestañas Gastos y Saldos de `/grupos/:id`
-(`?seccion=`), saldo por grupo y total en `/`. Solo crear (editar/borrar en el paso siguiente). Sin UI de pagos.
+(`?seccion=`), saldo por grupo y total en `/`. Desde RF-06/RF-10: `/grupos/:id/gastos/:expenseId/editar`, borrar con hoja
+inferior y pestaña Actividad (`?seccion=actividad`); editar/borrar solo quien añadió el gasto. Sin UI de pagos.
 Usuario y tarea: alguien del grupo apunta un gasto con una mano en < 15 s y ve al momento quién debe cuánto.
 Estados: cargando, vacío, error con Reintentar, validación por campo, enviando, sin conexión.
 Restricciones: céntimos enteros; reparto igual con resto determinista por user_id (splitEqual); saldos calculados
@@ -37,3 +38,12 @@ FORM: «Boleto», posición 5 de mi lista (tirada 5, 7, 3; el usuario eligió la
 degradada, sin retadores).
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+
+## Editar, borrar y actividad (RF-06, RF-10)
+
+FORM: «Pie del boleto», variante A de 3 (B «Editar en la barra», C «Talón con acciones»); el usuario eligió la A y
+fijó que solo quien añadió el gasto puede editarlo o borrarlo.
+
+CRITIQUE (⚠️ DEGRADED: single-context, sin sub-agentes por política de la sesión): detector limpio en las cinco
+pantallas tocadas; revisión visual en WebKit (iPhone 15 y 320 px). Arreglado: las pestañas «Miembros» y «Actividad» se
+tocaban a 320 px. Pendiente menor: a 320 px la pestaña activa «Actividad» queda justa contra su borde.

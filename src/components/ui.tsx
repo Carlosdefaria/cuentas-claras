@@ -142,7 +142,8 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field({ l
   )
 })
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean; tone?: 'primario' | 'peligro' }
+/** primario: acción principal · peligro: destructiva, contenida · destructivo: la confirmación final de un borrado. */
+type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean; tone?: 'primario' | 'peligro' | 'destructivo' }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   { loading, tone = 'primario', children, disabled, className = '', ...rest },
@@ -151,6 +152,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   const tones = {
     primario: 'bg-loteria text-white hover:bg-loteria-hondo active:bg-loteria-hondo',
     peligro: 'border border-sello/40 bg-white text-sello hover:bg-sello-claro active:bg-sello-claro',
+    destructivo: 'bg-sello text-white hover:bg-sello/90 active:bg-sello/90',
   }[tone]
   return (
     <button

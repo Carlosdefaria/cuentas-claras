@@ -1,60 +1,16 @@
 /// <reference lib="dom" />
 // Gastos con reparto igual y saldos contra la rama test: añadir gasto, lista por día, saldos por persona y por grupo
 // (cada miembro ve lo suyo), resto de céntimos determinista, validación y error de red. Borra al final lo creado.
-import { expect, test, type Browser, type Page, type TestInfo } from '@playwright/test'
-import { testSql } from '../scripts/testDb.ts'
-import { markVerified } from './otp.ts'
+import { expect, test } from '@playwright/test'
+import { cleanupUsers, groupOfTwo as groupOf, row } from './groupUsers.ts'
+import type { Browser, Page, TestInfo } from '@playwright/test'
 
-const PASSWORD = 'Prueba-E2E-1234'
 const created: string[] = []
+const groupOfTwo = (page: Page, browser: Browser, info: TestInfo, name: string) => groupOf(page, browser, info, name, created)
 
 test.describe.configure({ timeout: 120_000 })
 
-test.afterAll(async () => {
-  if (created.length === 0) return
-  const sql = testSql()
-  // Primero los grupos (en cascada gastos, cuotas, miembros y actividad); después los usuarios.
-  await sql.query(`delete from public.groups where created_by in (select id from neon_auth."user" where email = any($1::text[]))`, [created])
-  await sql.query(`delete from neon_auth."user" where email = any($1::text[])`, [created])
-})
-
-async function signedInUser(page: Page, name: string, info: TestInfo) {
-  const email = `e2e-exp-${name.toLowerCase().split(' ')[0]}-${info.project.name}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@cuentas-claras.test`
-  created.push(email)
-  await page.goto('/registro')
-  await page.getByLabel('Nombre').fill(name)
-  await page.getByLabel('Email').fill(email)
-  await page.getByLabel('Contraseña', { exact: true }).fill(PASSWORD)
-  await page.getByRole('button', { name: 'Crear cuenta' }).click()
-  await expect(page.getByRole('heading', { name: 'Confirma tu email' })).toBeVisible()
-  await markVerified(email)
-  await page.getByRole('link', { name: 'Entra', exact: true }).click()
-  await page.getByLabel('Contraseña', { exact: true }).fill(PASSWORD)
-  await page.getByRole('button', { name: 'Entrar' }).click()
-  await expect(page.getByRole('heading', { name: 'Grupos', exact: true })).toBeVisible()
-}
-
-/** Ana crea el grupo y Bea (otro móvil) se une con el enlace. Devuelve la página de Bea y el id del grupo. */
-async function groupOfTwo(page: Page, browser: Browser, info: TestInfo, groupName: string) {
-  await signedInUser(page, 'Ana Prueba', info)
-  await page.getByRole('link', { name: 'Nuevo grupo' }).click()
-  await page.getByLabel('Nombre del grupo').fill(groupName)
-  await page.getByRole('button', { name: 'Crear grupo' }).click()
-  const sheet = page.getByRole('dialog')
-  const link = await sheet.getByLabel('Enlace de invitación').inputValue()
-  await sheet.getByRole('button', { name: 'Cerrar' }).click()
-  const id = page.url().split('/').pop()!.split('?')[0]
-
-  const context = await browser.newContext({ ...info.project.use, baseURL: 'https://localhost:5173', ignoreHTTPSErrors: true })
-  const bea = await context.newPage()
-  await signedInUser(bea, 'Bea Prueba', info)
-  await bea.goto(link)
-  await bea.getByRole('button', { name: 'Unirme al grupo' }).click()
-  await expect(bea).toHaveURL(`/grupos/${id}`)
-  return { bea, context, id }
-}
-
-const row = (page: Page, text: string) => page.getByRole('listitem').filter({ hasText: text })
+test.afterAll(() => cleanupUsers(created))
 
 test('añadir un gasto: aparece en Gastos, cuadra en Saldos y en la lista de grupos de cada uno', async ({ page, browser }, info) => {
   const groupName = `Cena e2e ${Math.random().toString(36).slice(2, 6)}`

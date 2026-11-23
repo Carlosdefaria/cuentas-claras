@@ -22,3 +22,11 @@ export function formatCents(cents: number): string {
   if (!Number.isSafeInteger(cents)) throw new Error(`Importe en céntimos no válido: ${cents}`)
   return eurFormatter.format(cents / 100)
 }
+
+/** Céntimos como texto para un campo de importe («42,50»; «42» si son euros enteros). Inversa de parseEurosToCents. */
+export function centsToInputText(cents: number): string {
+  if (!Number.isSafeInteger(cents) || cents < 0) throw new Error(`Importe en céntimos no válido: ${cents}`)
+  const euros = Math.floor(cents / 100)
+  const rest = cents % 100
+  return rest === 0 ? String(euros) : `${euros},${String(rest).padStart(2, '0')}`
+}

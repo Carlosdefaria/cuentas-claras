@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dayLabel, groupByDay, localToday } from './dates'
+import { dayLabel, groupByDay, localDateOf, localToday, shortDay, timeOf, whenLabel } from './dates'
 
 describe('localToday', () => {
   it('usa la fecha local, no UTC', () => {
@@ -39,5 +39,30 @@ describe('groupByDay', () => {
       { date: '2026-11-22', items: [items[0], items[1]] },
       { date: '2026-11-21', items: [items[2]] },
     ])
+  })
+})
+
+describe('fecha y hora locales de un instante (actividad)', () => {
+  it('localDateOf da el día local y timeOf la hora local HH:MM', () => {
+    const d = new Date(2026, 10, 23, 21, 4)
+    expect(localDateOf(d.toISOString())).toBe('2026-11-23')
+    expect(timeOf(d.toISOString())).toBe('21:04')
+  })
+})
+
+describe('whenLabel', () => {
+  const at = (d: number, h: number, m: number) => new Date(2026, 10, d, h, m).toISOString()
+  it('hoy y ayer con la hora; antes, el día', () => {
+    expect(whenLabel(at(23, 21, 14), '2026-11-23')).toBe('hoy a las 21:14')
+    expect(whenLabel(at(22, 9, 5), '2026-11-23')).toBe('ayer a las 09:05')
+    expect(whenLabel(at(20, 9, 5), '2026-11-23')).toBe('el 20 nov')
+    expect(whenLabel(new Date(2025, 11, 31, 10, 0).toISOString(), '2026-01-02')).toBe('el 31 dic 2025')
+  })
+})
+
+describe('shortDay', () => {
+  it('sin año si es del mismo año; con año si no', () => {
+    expect(shortDay('2026-11-20', '2026-11-23')).toBe('20 nov')
+    expect(shortDay('2025-12-31', '2026-01-02')).toBe('31 dic 2025')
   })
 })
