@@ -26,10 +26,10 @@ const update = async (actor: string, id: string, amount: number, shares: Share[]
     id, await version(id), amount, u.ana, JSON.stringify(shares), splitType,
   ])
 
-const saved = async (id: string) => {
+const saved = async (id: string): Promise<{ split_type: string; amount_cents: number; shares: Share[] }> => {
   const [e] = await sql.query(`select split_type, amount_cents from public.expenses where id = $1`, [id])
   const shares = await sql.query(`select user_id, amount_cents, percent_bp from public.expense_shares where expense_id = $1 order by user_id`, [id])
-  return { ...e, shares }
+  return { split_type: String(e.split_type), amount_cents: Number(e.amount_cents), shares: shares as Share[] }
 }
 
 const lastChanges = async (id: string) =>

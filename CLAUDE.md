@@ -20,6 +20,9 @@ Se construye por fases (PRD §11). Plan de trabajo: Fase 1 = auth, grupos, gasto
   (El PRD §6 tiene los signos de los pagos al revés; esta es la versión correcta: pagar reduce tu deuda.)
 - La suma de saldos de un grupo es siempre 0. Los saldos **no se almacenan**: se calculan.
 - Reparto igual: los céntimos sobrantes se reparten 1 a 1 por orden ascendente de `user_id` (determinista).
+- Reparto por porcentajes: en **puntos básicos** (33,33 % = 3333, suman 10000); cada cuota es la parte entera y los
+  céntimos sobrantes van al **mayor resto**, en empate al `user_id` menor (`splitByPercent`). Por importes: la suma de
+  las cuotas = el total. Quien tiene 0 € o 0 % no participa.
 - Simplificación de deudas (Fase 2): voraz, mayor deudor ↔ mayor acreedor, ≤ n−1 pagos.
 - Borrado de gastos = soft delete (`deleted_at`).
 
@@ -97,6 +100,14 @@ Se construye por fases (PRD §11). Plan de trabajo: Fase 1 = auth, grupos, gasto
   páginas de 50 con cursor `id=lt.`) y `parseActivity` (`src/domain/activity.ts`, defensiva: lo que no entiende se omite).
 - Saldos **solo** con `computeBalances` (`src/lib/expenses.ts`: `balancesOf`, `myBalancesByGroup`); los pagos cuentan.
 
+### Tipos de reparto (RF-05, Fase 2)
+- Migración 0009: `expenses.split_type` ('equal' | 'amounts' | 'percent') y `expense_shares.percent_bp`.
+  `create_expense` / `update_expense` llevan `p_split_type` (por defecto 'equal') y la BD comprueba los porcentajes
+  (suman 100 % y cada cuota a < 1 céntimo de la exacta). `update_expense` registra `changes.split_type`.
+- Formulario (variante B): «Se reparte **a partes iguales** ▾» abre `SplitTypeSheet` (elegir cierra la hoja); por
+  importes o porcentajes, un campo por persona relleno con el reparto igual y la línea «110,00 € de 120,00 € · Faltan
+  10,00 €». Dominio en `expenseForm.ts` (`splitType`, `amounts`, `percents`, `splitSummary`).
+
 ### Pagos y saldar cuentas (Fase 2)
 - Pagos mínimos con `simplifyDebts` (`src/domain/simplify.ts`: voraz, mayor deudor ↔ mayor acreedor, empates por id,
   ≤ n−1 pagos). Formulario con `validateSettlement` (`src/domain/settlementForm.ts`).
@@ -141,7 +152,7 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
   - `.neon` queda fijado en `production`; no cambiar con `neon checkout` sin `--no-env-pull`.
 
 ## Antes de tocar production
-- **No se aplica ninguna migración en production tal cual.** Antes, las migraciones 0001–0004 (y las posteriores: 0005, 0006, 0007, 0008…) se consolidarán en
+- **No se aplica ninguna migración en production tal cual.** Antes, las migraciones 0001–0004 (y las posteriores: 0005 … 0009…) se consolidarán en
   una **línea base limpia** (sin el intento fallido 0003 y con el parche de `current_user_id()` ya integrado),
   que se probará en una **rama nueva creada desde production** (`npm run test:db` completo, incluido el test en
   frío) y cuyo esquema se comparará con el de `test` (`neon branches schema-diff` o equivalente) antes de aplicarla.

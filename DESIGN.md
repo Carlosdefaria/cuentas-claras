@@ -314,6 +314,19 @@ los PNG (192, 512, maskable 512 con el motivo en el 80 % central, `apple-touch-i
   entra Marta»; borrado con el importe tachado y quién pagó) y la hora a la derecha. Las filas de un gasto vivo abren
   su detalle. «Ver más» (secundario) cada 50.
 
+### Tipos de reparto (variante B de 3, elegida por el usuario: «Frase y hoja»)
+Principio del usuario: lo más minimalista posible y sin fricción al apuntar un gasto.
+- **Frase**: en lugar de «A partes iguales entre», «Se reparte **a partes iguales** ▾» (la opción en verde lotería,
+  subrayada, 44 px de zona táctil). Por defecto el formulario es el de siempre; «Todos / Ninguno» solo a partes iguales.
+- **Hoja «¿Cómo se reparte?»**: tres opciones con radio nativo, título y una línea de explicación; elegir cierra la hoja
+  al momento (sin botón de confirmar).
+- **Por importes / por porcentajes**: sin casillas; cada fila lleva un campo blanco de 44 px a la derecha (importe
+  7.25rem con «€», % 5.75rem con «%»), relleno con el reparto igual entre quienes participaban; vacío o 0 = no participa.
+  En porcentajes, bajo el nombre, lo que le toca en euros cuando ya suman 100 %.
+- **Línea de suma** bajo las filas: «110,00 € de 120,00 € · Faltan 10,00 €» / «83,33 % de 100 % · Faltan 16,67 %» en
+  `papel`; «✓ Cuadra» en `loteria-claro`; en `sello-claro` solo tras intentar guardar sin cuadrar.
+- **Detalle**: «Reparto · por porcentajes» y el % de cada fila en nota antes del importe.
+
 ### Pagos y saldar cuentas (variante A de 3, elegida por el usuario: «Saldar en Saldos»)
 - **Para saldar cuentas · n pagos** (pestaña Saldos, bajo «Tu saldo»): tarjeta plana con una fila de ≥60 px por pago
   mínimo: círculo de quien paga → (flecha `ArrowRight` en `tinta-tenue`) → círculo de quien cobra, «Pagas a Ana» /
