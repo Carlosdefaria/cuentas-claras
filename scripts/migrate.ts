@@ -1,6 +1,14 @@
-// Aplica las migraciones de db/migrations/*.sql en la rama `test` de Neon.
+// Aplica el esquema en una rama de prueba de Neon (`test`, o `baseline-*` con DB_ENV; ver scripts/testDb.ts).
 //
 //   npm run db:migrate
+//   DB_ENV=.env.baseline.local npm run db:migrate
+//
+// 1. Línea base (db/baseline.sql = 0001–0009 consolidadas; historial en db/migrations-legacy/):
+//    - base sin historial ni tablas → se aplica y se anota como `baseline.sql`;
+//    - base con 0001–0009 ya anotadas (la rama `test`) → solo se anota (es el mismo esquema: comprobado con
+//      `neon branches schema-diff`), sin ejecutar nada;
+//    - historial parcial, o tablas sin historial → aborta.
+// 2. Después, las migraciones de db/migrations/*.sql (0010 en adelante), en orden.
 //
 // - Registra cada migración aplicada en app_migrations.applied (nombre + checksum SHA-256)
 //   y no la vuelve a ejecutar.
@@ -15,9 +23,15 @@ import { createHash } from 'node:crypto'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import pgQuery from 'libpg-query'
-import { testSql } from './testDb.ts'
+import { testEnv, testSql } from './testDb.ts'
 
 const MIGRATIONS_DIR = 'db/migrations'
+const LEGACY_DIR = 'db/migrations-legacy'
+const BASELINE = 'db/baseline.sql'
+const BASELINE_NAME = 'baseline.sql'
+
+const sha256 = (text: string) => createHash('sha256').update(text).digest('hex')
+const sqlFiles = (dir: string) => readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()
 
 interface RawStmt {
   stmt: Record<string, unknown>
@@ -57,12 +71,44 @@ async function main() {
     applied.set(row.name as string, row.checksum as string)
   }
 
-  const files = readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith('.sql')).sort()
   let count = 0
+
+  // 1. Línea base.
+  const baselineText = readFileSync(BASELINE, 'utf8')
+  const baselineSum = sha256(baselineText)
+  const previousBaseline = applied.get(BASELINE_NAME)
+  if (previousBaseline && previousBaseline !== baselineSum) {
+    throw new Error(`${BASELINE_NAME} ya está anotada pero ha cambiado en disco. No se edita: crea una migración nueva.`)
+  }
+  if (!previousBaseline) {
+    const legacy = sqlFiles(LEGACY_DIR)
+    const legacyDone = legacy.filter((f) => applied.has(f))
+    if (legacyDone.length === legacy.length) {
+      await sql.query('insert into app_migrations.applied (name, checksum) values ($1, $2)', [BASELINE_NAME, baselineSum])
+      console.log(`= ${BASELINE_NAME} (la base ya tiene 0001–0009: solo se anota)`)
+    } else if (legacyDone.length > 0) {
+      throw new Error(`Historial parcial (${legacyDone.join(', ')}): no se puede aplicar la línea base encima.`)
+    } else {
+      const [{ exists }] = await sql.query(`select to_regclass('public.groups') is not null as exists`)
+      if (exists) throw new Error('La base tiene tablas pero no historial de migraciones: revisa antes de aplicar nada.')
+      const statements = await splitStatements(baselineText)
+      await sql.transaction([
+        ...statements.map((s) => sql.query(s)),
+        sql.query('insert into app_migrations.applied (name, checksum) values ($1, $2)', [BASELINE_NAME, baselineSum]),
+      ])
+      console.log(`+ ${BASELINE_NAME} (${statements.length} sentencias)`)
+      count++
+    }
+  } else {
+    console.log(`= ${BASELINE_NAME} (ya aplicada)`)
+  }
+
+  // 2. Migraciones posteriores a la línea base.
+  const files = sqlFiles(MIGRATIONS_DIR)
 
   for (const file of files) {
     const text = readFileSync(join(MIGRATIONS_DIR, file), 'utf8')
-    const checksum = createHash('sha256').update(text).digest('hex')
+    const checksum = sha256(text)
     const previous = applied.get(file)
 
     if (previous === checksum) {
@@ -82,7 +128,8 @@ async function main() {
     count++
   }
 
-  console.log(count === 0 ? 'Nada que aplicar.' : `Aplicadas ${count} migraciones en la rama test.`)
+  const branch = testEnv().NEON_BRANCH
+  console.log(count === 0 ? `Nada que aplicar en la rama ${branch}.` : `Aplicadas ${count} migraciones en la rama ${branch}.`)
 }
 
 main().catch((err) => {

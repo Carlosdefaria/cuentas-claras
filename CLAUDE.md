@@ -152,10 +152,18 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
   - `.neon` queda fijado en `production`; no cambiar con `neon checkout` sin `--no-env-pull`.
 
 ## Antes de tocar production
-- **No se aplica ninguna migración en production tal cual.** Antes, las migraciones 0001–0004 (y las posteriores: 0005 … 0009…) se consolidarán en
-  una **línea base limpia** (sin el intento fallido 0003 y con el parche de `current_user_id()` ya integrado),
-  que se probará en una **rama nueva creada desde production** (`npm run test:db` completo, incluido el test en
-  frío) y cuyo esquema se comparará con el de `test` (`neon branches schema-diff` o equivalente) antes de aplicarla.
+- **Línea base hecha:** `db/baseline.sql` consolida 0001–0009 (sin el intento fallido 0003, con el parche de
+  `current_user_id()` en su versión final; funciones copiadas de `test` con `pg_get_functiondef`). Las migraciones
+  antiguas quedan como historial en `db/migrations-legacy/` (las referencias «migración 000X» de este fichero apuntan ahí).
+  Probada en la rama **`baseline-check`** (creada desde production, con Neon Auth y Data API como `test`): `test:db`
+  completo (153, con el test en frío), `db:perf` (45,7 ms tras `ANALYZE`), e2e completo contra su Auth y Data API, y
+  `neon branches schema-diff test baseline-check` sin diferencias salvo `pgrst.openapi_mode` (ajuste de la Data API).
+- **Production está vacía** (sin tablas, sin Data API, sin Neon Auth). Ponerla en marcha, cuando se autorice:
+  Neon Auth con la configuración de `test` (OTP, verificación obligatoria, cierre de sesiones al cambiar la contraseña,
+  **quitar Google**, que viene activado por defecto, y `allow_localhost` desactivado) → Data API (`add_default_grants`
+  **false**, `db_anon_role` anonymous, `jwt_role_claim_key` .role) → aplicar `db/baseline.sql` (hará falta un comando
+  propio con barreras: `db:migrate` solo admite `test` y `baseline-*`) → refrescar la caché de la Data API → dominio de
+  confianza → variables de Production en Vercel.
 - Production no se toca (ni `neon deploy`, ni migraciones, ni dominios de Auth) sin autorización explícita.
 
 ## Riesgos conocidos
@@ -188,9 +196,17 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
 ## Convenciones
 - UI en español; textos centralizados (preparados para i18n).
 - Comandos: `npm run dev`, `npm test` (Vitest, dominio, sin red), `npm run build` (tsc + Vite), `npm run lint` (oxlint).
-- BD (solo rama `test`, vía `scripts/testDb.ts`): `npm run db:migrate` (registra en `app_migrations.applied`; no se editan migraciones aplicadas, se crea una nueva), `npm run test:db` (RLS/RPC), `npm run db:perf` (50 miembros × 5.000 gastos + EXPLAIN ANALYZE).
+- BD (solo ramas de prueba, vía `scripts/testDb.ts`): `npm run db:migrate`, `npm run test:db` (RLS/RPC), `npm run db:perf`
+  (50 miembros × 5.000 gastos + EXPLAIN ANALYZE). Por defecto la rama `test` (`.env.test.local`); otra rama de prueba con
+  `DB_ENV=.env.baseline….local` (barreras: el fichero tiene que ser `.env.test.local` o `.env.baseline*.local` y la rama
+  `test` o `baseline-*`; nunca production).
+- `db:migrate`: aplica `db/baseline.sql` en una base vacía (en `test`, que ya tenía 0001–0009, solo lo anota) y después
+  `db/migrations/0010…` en orden (registro en `app_migrations.applied`; no se editan migraciones aplicadas ni la línea base:
+  se crea una nueva).
 - El contenedor cloud solo permite HTTPS: se usa el driver HTTP de Neon contra el host del endpoint de test (`NODE_USE_ENV_PROXY=1`, ya incluido en los scripts).
 - CLI de Neon en el contenedor cloud: `NEON_API_KEY=proxy-injected neon …` (el proxy inyecta la key real).
+- Una rama nueva de Neon tiene hosts nuevos (BD `-pooler`, `.neonauth`, `.apirest`): hay que añadirlos a la red del
+  entorno cloud «cuentas-claras» para usarlos desde el contenedor (los de `test` y `baseline-check` ya están).
 - **Tras una migración que cree o cambie funciones/tablas expuestas**, refrescar la caché de esquema de la Data API de
   `test` o PostgREST responde `404 PGRST202` (la app muestra «Algo ha fallado»):
   `NEON_API_KEY=proxy-injected NODE_USE_ENV_PROXY=1 neon data-api refresh-schema --branch test --database neondb`
