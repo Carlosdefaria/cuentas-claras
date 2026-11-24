@@ -283,11 +283,14 @@ los PNG (192, 512, maskable 512 con el motivo en el 80 % central, `apple-touch-i
   la moneda se muestra como texto fijo sobre `papel`.
 
 ### Gastos y saldos (variante A de 3, elegida por el usuario: «Boleto»)
-- **Añadir gasto**: el gasto es una participación. Talón mantequilla con «Importe» y la cifra (2.75rem, el «€» pegado
-  detrás: el campo mide lo que su texto) y el concepto en un campo blanco translúcido; troquel; cuerpo con Pagó
+- **Añadir gasto**: el gasto es una participación. Talón mantequilla con «Importe» y la **caja del importe** (variante C de
+  3, elegida por el usuario para que el importe sea lo primero que se ve): campo blanco de 96 px, radio 12 px, borde de 2 px
+  en tinta al 30 %, la cifra a 3.5rem / 700 / tabular (2.75rem desde 8 caracteres y 2.25rem desde 10, para que quepa
+  1.000.000,00) y el «€» dentro a la derecha en `tinta-suave`; enfocada, borde verde lotería y halo de 4 px; con error,
+  borde rojo sello. Toda la caja es zona táctil. Debajo, el concepto en un campo blanco translúcido; troquel; cuerpo con Pagó
   (select) | Fecha (`type="date"` nativo) a dos columnas y «A partes iguales entre» con una fila de ≥52 px por persona
   (casilla nativa en verde lotería, círculo de su talón, nombre, cuota en vivo) separadas por punteado; «Todos /
-  Ninguno» a la derecha; nota de céntimos sobrantes. Error del importe: anillo rojo sello. Salir con el gasto a
+  Ninguno» a la derecha; nota de céntimos sobrantes. Error del importe: borde rojo sello en la caja. Salir con el gasto a
   medio escribir pide confirmación.
 - **Pestaña Gastos** (por defecto; pestaña en la URL `?seccion=`): botón principal «Añadir gasto»; días («Hoy · 22
   nov», «Ayer · 21 nov», «20 nov») con su total a la derecha; filas con el círculo del pagador, concepto, «Pagó X»,

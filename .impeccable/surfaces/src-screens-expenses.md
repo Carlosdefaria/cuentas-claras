@@ -65,3 +65,11 @@ más minimalista y sin fricción para añadir gastos.
 CRITIQUE (⚠️ DEGRADED: single-context, sin sub-agentes por política de la sesión): detector limpio; revisión visual en
 WebKit (iPhone 15). Ajustado: la línea de suma se acortó («110,00 € de 120,00 € · Faltan 10,00 €») para caber en una
 línea.
+
+## Importe más protagonista (Añadir / Editar gasto)
+
+FORM: «Caja del importe», variante C de 3 (A «Cifra en el centro», B «Línea para escribir»). Petición del usuario: que el
+sitio del importe sea lo primero que se ve; el resto del formulario, igual.
+
+CRITIQUE (⚠️ DEGRADED: single-context): revisión visual en WebKit (iPhone 15) vacío, escribiendo, importe largo
+(1.000.000,00 cabe a 2.25rem) y con error. Marcador «0,00» en `tinta-tenue` al 80 % (≥ 3:1, texto grande).

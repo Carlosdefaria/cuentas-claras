@@ -92,6 +92,9 @@ function Missing({ title, body, to, action }: { title: string; body: string; to:
 
 const list = new Intl.ListFormat('es', { type: 'conjunction' })
 
+/** Tamaño de la cifra en la caja del importe: grande siempre, y más pequeña con importes largos para que quepa. */
+const amountSize = (text: string) => (text.length <= 7 ? 'text-[3.5rem]' : text.length <= 9 ? 'text-[2.75rem]' : 'text-[2.25rem]')
+
 function errorText(errors: ExpenseErrors) {
   const E = F.errors
   return {
@@ -308,18 +311,20 @@ function ExpenseForm({ groupId, members: allMembers, editing }: { groupId: strin
           <label htmlFor="gasto-importe" className="text-[0.9375rem] font-semibold text-tinta-suave">
             {F.amount}
           </label>
-          <div className="mt-0.5 flex items-baseline gap-1.5">
-            {/* El campo mide lo que su texto: un gemelo invisible en la misma celda de la rejilla le da el ancho exacto
-                (las comas son más estrechas que las cifras), y el «€» queda pegado detrás. */}
-            <span className="-ml-1 inline-grid min-w-0 max-w-[calc(100%-2.5rem)]">
-              <span aria-hidden className="invisible col-start-1 row-start-1 whitespace-pre px-1 py-1 text-[2.75rem] font-bold leading-none tracking-[-0.01em] tabular-nums">
-                {amountText || F.amountPlaceholder}
-              </span>
+          {/* «Caja del importe» (variante C): un campo blanco grande con el «€» dentro, inconfundible; al escribir, borde
+              verde y halo. La cifra se encoge con importes largos para caber siempre (hasta 1.000.000,00 €). */}
+          {/* La caja entera es zona táctil del campo (también el «€»). */}
+          <label
+            className={`mt-1.5 flex h-24 cursor-text items-center gap-2 rounded-xl border-2 bg-white px-4 transition-[border-color,box-shadow] duration-150 ${
+              text.amount
+                ? 'border-sello focus-within:shadow-[0_0_0_4px_rgb(179_48_42/0.18)]'
+                : 'border-tinta/30 focus-within:border-loteria focus-within:shadow-[0_0_0_4px_rgb(13_86_55/0.18)]'
+            }`}
+          >
             <input
               ref={amountRef}
               id="gasto-importe"
               name="amount"
-              size={1}
               inputMode="decimal"
               autoComplete="off"
               enterKeyHint="next"
@@ -328,17 +333,14 @@ function ExpenseForm({ groupId, members: allMembers, editing }: { groupId: strin
               onChange={(e) => setAmountText(e.target.value)}
               aria-invalid={text.amount ? true : undefined}
               aria-describedby={describedBy('importe', text.amount)}
-              className={`col-start-1 row-start-1 w-full min-w-0 rounded-lg bg-transparent px-1 py-1 text-[2.75rem] font-bold leading-none tracking-[-0.01em] text-tinta tabular-nums placeholder:text-tinta-tenue focus:outline-none focus-visible:outline-none ${
-                text.amount ? 'shadow-[0_0_0_2px_var(--color-sello)] focus:shadow-[0_0_0_3px_var(--color-sello)]' : 'focus:shadow-[0_0_0_3px_rgb(13_86_55/0.18)]'
-              }`}
+              className={`h-full w-full min-w-0 flex-1 bg-transparent font-bold leading-none tracking-[-0.02em] text-tinta tabular-nums placeholder:text-tinta-tenue/80 focus:outline-none focus-visible:outline-none ${amountSize(amountText)}`}
             />
-            </span>
-            <span aria-hidden className="text-[1.875rem] font-semibold">
+            <span aria-hidden className="flex-none text-[2rem] font-semibold text-tinta-suave">
               €
             </span>
-          </div>
+          </label>
           {text.amount && (
-            <p id="gasto-importe-error" className="text-sm font-medium text-sello">
+            <p id="gasto-importe-error" className="mt-1.5 text-sm font-medium text-sello">
               {text.amount}
             </p>
           )}
@@ -358,7 +360,7 @@ function ExpenseForm({ groupId, members: allMembers, editing }: { groupId: strin
             onChange={(e) => setDescription(e.target.value)}
             aria-invalid={text.description ? true : undefined}
             aria-describedby={describedBy('concepto', text.description)}
-            className={`mt-2.5 h-12 w-full rounded-lg border bg-white/75 px-3.5 text-tinta placeholder:text-tinta-tenue transition-[border-color,box-shadow] duration-150 focus:bg-white focus:outline-none ${
+            className={`mt-3 h-12 w-full rounded-lg border bg-white/75 px-3.5 text-tinta placeholder:text-tinta-tenue transition-[border-color,box-shadow] duration-150 focus:bg-white focus:outline-none ${
               text.description
                 ? 'border-sello focus:shadow-[0_0_0_3px_rgb(179_48_42/0.18)]'
                 : 'border-trazo focus:border-loteria focus:shadow-[0_0_0_3px_rgb(13_86_55/0.18)]'
