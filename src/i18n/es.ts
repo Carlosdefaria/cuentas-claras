@@ -168,6 +168,35 @@ export const es = {
       alone: 'De momento estás tú solo. Invita a los demás para repartir los gastos.',
       welcome: (name: string) => `Ya estás en «${name}».`,
     },
+    /** RF-11 (variante C «Ficha de persona»): quien administra quita miembros o borra el grupo. */
+    manage: {
+      hint: 'Toca a alguien para ver su saldo o quitarlo del grupo.',
+      gone: 'Ya no está',
+      goneLower: 'ya no está',
+      since: (date: string) => `En el grupo desde el ${date}`,
+      balance: 'Saldo',
+      showBalances: 'Ver cómo saldar',
+      cancel: 'Cancelar',
+      close: 'Cerrar',
+      remove: {
+        body: 'Dejará de ver el grupo y no podrá volver a entrar con el enlace. Sus gastos y pagos se quedan, de solo lectura.',
+        blocked: (name: string) => `Solo puedes quitar a ${name} cuando su saldo esté a cero.`,
+        confirm: (name: string) => `Quitar a ${name} del grupo`,
+        removing: 'Quitando…',
+        done: (name: string) => `Has quitado a ${name} del grupo.`,
+      },
+      deleteGroup: {
+        action: 'Borrar grupo…',
+        title: (name: string) => `¿Borrar ${name}?`,
+        allSettled: 'Todos están en paz',
+        body: (n: number) =>
+          `El grupo, sus gastos y sus pagos desaparecerán para ${n === 1 ? 'ti' : `los ${n} miembros`}. No se puede deshacer.`,
+        blocked: 'Para borrar el grupo, todos tienen que estar en paz. Aún hay saldos pendientes:',
+        confirm: 'Borrar grupo',
+        deleting: 'Borrando…',
+        done: (name: string) => `Grupo borrado: «${name}».`,
+      },
+    },
     invite: {
       title: (name: string) => `Invita a ${name}`,
       body: 'Quien abra el enlace se une al grupo tras crear su cuenta y confirmar su email.',

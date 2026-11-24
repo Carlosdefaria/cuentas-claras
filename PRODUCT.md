@@ -44,7 +44,7 @@ fricción por enlace de invitación. Los cálculos son exactos al céntimo (ente
 
 - MVP (PRD §4): registro/login por email, grupos con invitación por enlace, gastos con reparto igual,
   por importes o por porcentajes, saldos por persona y grupo, simplificación de deudas, pagos, historial de
-  actividad y editar/borrar gastos (borrado lógico).
+  actividad, editar/borrar gastos (borrado lógico) y, quien administra, quitar miembros o borrar el grupo (con saldos a 0).
 - Fuera del MVP: login social, app nativa, recurrentes, OCR, multidivisa, pagos integrados, invitados sin
   cuenta, notificaciones push, exportar.
 - Moneda única **EUR**; importes en céntimos enteros; formato español (`1.234,56 €`).

@@ -16,7 +16,7 @@ import { useAsync } from '../../lib/useAsync'
 import { formatCents } from '../../domain/money'
 import { ButtonLink, LoadError } from '../../components/ui'
 import { TALON_BG } from '../../components/talonBg'
-import { PersonDot } from './PersonDot'
+import { GoneMark, PersonDot } from './PersonDot'
 import { ConfirmDeleteSheet } from './ConfirmDeleteSheet'
 
 const T = es.expenses
@@ -100,13 +100,19 @@ export function SettlementDetail() {
           <p className="flex min-h-13 flex-wrap items-center gap-x-2.5 gap-y-1 font-semibold">
             <span className="inline-flex items-center gap-2">
               <PersonDot person={from} size="sm" />
-              {label(from)}
+              <span>
+                {label(from)}
+                <GoneMark person={from} />
+              </span>
             </span>
             <ArrowRight aria-hidden className="size-5 text-tinta-tenue" strokeWidth={2.25} />
             <span className="sr-only">{S.pays}</span>
             <span className="inline-flex items-center gap-2">
               <PersonDot person={to} size="sm" />
-              {label(to)}
+              <span>
+                {label(to)}
+                <GoneMark person={to} />
+              </span>
             </span>
           </p>
           <p className="text-tinta-suave">{S.on(formatDay(s.date))}</p>

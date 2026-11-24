@@ -1,7 +1,8 @@
 // Grupos: arriba las dos acciones (crear y unirse con un enlace), debajo la lista compacta de mis grupos.
 // Estados: cargando (esqueleto), vacío, error con Reintentar. Siempre desde la red (Data API + RLS).
 
-import { Link } from 'react-router'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { ChevronRight, Link2, Plus } from 'lucide-react'
 import { es } from '../../i18n/es'
 import { db } from '../../lib/data'
@@ -27,9 +28,24 @@ export function Groups() {
     const balances = await myBalancesByGroup(db, me, list.map((g) => g.id))
     return list.map((g) => ({ ...g, balance: balances.get(g.id) ?? 0 }))
   }, [me])
+  // Aviso de una acción recién hecha (p. ej. «Grupo borrado» desde Miembros); se limpia de la navegación.
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [notice] = useState<string | null>(() => (location.state as { notice?: string } | null)?.notice ?? null)
+  useEffect(() => {
+    if ((location.state as { notice?: string } | null)?.notice) navigate(location.pathname, { replace: true, state: null })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <>
+      <div aria-live="polite">
+        {notice && (
+          <p role="status" className="mb-5 break-words rounded-lg bg-loteria-claro px-3.5 py-3 font-semibold text-loteria-hondo">
+            {notice}
+          </p>
+        )}
+      </div>
       <SectionTitle>{T.title}</SectionTitle>
 
       <div className="mt-5 grid grid-cols-2 gap-2.5">

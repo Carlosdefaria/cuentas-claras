@@ -10,7 +10,7 @@ import { dayLabel, groupByDay, localToday } from '../../lib/dates'
 import type { ExpenseRow, SettlementRow } from '../../lib/expenses'
 import type { Person } from '../../lib/people'
 import { ButtonLink } from '../../components/ui'
-import { PersonDot } from './PersonDot'
+import { GoneMark, PersonDot } from './PersonDot'
 
 const T = es.expenses
 
@@ -78,6 +78,7 @@ export function ExpensesPanel({
                         <span className="block break-words font-semibold leading-snug">{e.description}</span>
                         <span className="block text-sm text-tinta-suave">
                           {payer?.isMe ? T.paidByYou : T.paidBy(payer?.name ?? T.someone)}
+                          <GoneMark person={payer} />
                         </span>
                       </span>
                       <span className="flex-none text-right tabular-nums">
@@ -110,8 +111,14 @@ function SettlementItem({ groupId, s, people }: { groupId: string; s: Settlement
           <ArrowRight className="size-4.5" strokeWidth={2.25} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block break-words font-semibold leading-snug">{to?.isMe ? S.rowToYou : S.rowTo(to?.name ?? T.someone)}</span>
-          <span className="block text-sm text-tinta-suave">{from?.isMe ? S.paidByYou : S.paidBy(from?.name ?? T.someone)}</span>
+          <span className="block break-words font-semibold leading-snug">
+            {to?.isMe ? S.rowToYou : S.rowTo(to?.name ?? T.someone)}
+            <GoneMark person={to} />
+          </span>
+          <span className="block text-sm text-tinta-suave">
+            {from?.isMe ? S.paidByYou : S.paidBy(from?.name ?? T.someone)}
+            <GoneMark person={from} />
+          </span>
         </span>
         <span className="flex-none font-bold tabular-nums">{formatCents(s.amountCents)}</span>
       </Link>

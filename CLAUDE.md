@@ -1,7 +1,7 @@
 # CLAUDE.md – Cuentas Claras
 
 App web de gastos compartidos (tipo Splitwise). Requisitos completos en `docs/PRD.md`.
-Se construye por fases (PRD §11). Plan de trabajo: Fase 1 = auth, grupos, gastos con reparto igual, saldos.
+Se construyó por fases (PRD §11). MVP completo (con RF-11) y en production; lo siguiente, solo lo que se pida.
 
 ## Stack (decidido)
 - **Frontend:** React + Vite + TypeScript + Tailwind. Mobile-first.
@@ -62,7 +62,7 @@ Se construye por fases (PRD §11). Plan de trabajo: Fase 1 = auth, grupos, gasto
   instalada no comparte cookies con Safari, y un enlace abriría Safari.
 - Códigos por email: `src/lib/otp.ts` (el SDK registra el plugin email OTP pero no lo tipa). Neon Auth de `test`:
   `require_email_verification`, envío al registrarse y al entrar sin verificar, `auto_sign_in_after_verification`,
-  `revoke_sessions_on_password_reset` y sin Google OAuth. **Production tendrá que configurarse igual** (con autorización).
+  `revoke_sessions_on_password_reset` y sin Google OAuth. Production está configurada igual (ver «Production»).
   Pantallas: `/verificar`, `/recuperar`, `/recuperar/codigo` (dos pasos). Registrarse con un email que ya existe no
   da error (no se revela qué emails existen): lleva a «Confirma tu email» con «¿Ya tenías cuenta…? Entra».
   En e2e el código se fija con `e2e/otp.ts` (Neon Auth guarda el hash SHA-256 base64url, «hash:intentos»).
@@ -107,6 +107,24 @@ Se construye por fases (PRD §11). Plan de trabajo: Fase 1 = auth, grupos, gasto
 - Formulario (variante B): «Se reparte **a partes iguales** ▾» abre `SplitTypeSheet` (elegir cierra la hoja); por
   importes o porcentajes, un campo por persona relleno con el reparto igual y la línea «110,00 € de 120,00 € · Faltan
   10,00 €». Dominio en `expenseForm.ts` (`splitType`, `amounts`, `percents`, `splitSummary`).
+
+### Quitar miembros y borrar el grupo (RF-11)
+- Migración `db/migrations/0010_remove_member_delete_group.sql`: `memberships.removed_at` (la fila no se borra: se
+  conserva el nombre); `my_group_ids()` / `is_member()` solo cuentan activos (quien ya no está deja de ver el grupo);
+  `app_private.is_active_member`, `app_private.member_balance` (misma fórmula que `computeBalances`, sin lo borrado) y
+  `app_private.lock_group_as_admin` (bloquea el grupo FOR UPDATE: serializa con `create_expense`/`create_settlement`).
+- RPC `remove_member` (solo admin activo, no a sí mismo, saldo 0; `member_removed` con `user_id` y `name`) y
+  `delete_group` (soft delete con todos a 0; `group_deleted`). `join_group` e `invite_preview` rechazan a quien fue quitado.
+  Solo lectura en `lock_own_expense` y `delete_settlement` si participa alguien que ya no está; `check_expense_input` y
+  `create_settlement` solo aceptan miembros activos. `group_members()` devuelve también `removed_at`.
+- Errores propios → `DataApiError.kind`: `CC001` 'unsettled' (saldo pendiente), `CC002` 'removed' (te quitaron),
+  `CC003` 'read-only'.
+- Dominio `src/domain/members.ts` (`isAdmin`, `canRemoveMember`, `canDeleteGroup`, `isReadOnly`); `activeMembers` y
+  `goneNames` en `groups.ts`; `Person.gone` en `peopleOf` (los formularios solo ofrecen activos; los talones se asignan
+  con todos para que nadie cambie de color). Saldos del grupo solo con activos.
+- UI (variante C «Ficha de persona»): `MembersPanel` (ficha con saldo y «Quitar», o bloqueo con «Ver cómo saldar»;
+  «Borrar grupo…» al final; quien ya no está al final de la lista), hojas con `components/BottomSheet.tsx`, `GoneMark`
+  (« · ya no está») y `ReadOnlyNote`.
 
 ### Pagos y saldar cuentas (Fase 2)
 - Pagos mínimos con `simplifyDebts` (`src/domain/simplify.ts`: voraz, mayor deudor ↔ mayor acreedor, empates por id,

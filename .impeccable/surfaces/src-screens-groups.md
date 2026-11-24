@@ -40,3 +40,14 @@ FORM: «Acción primero, hoja inferior», posición 7 de mi lista (repartida por
 la 7). seed:5cc768e3e5ed981f (tirada degradada, sin retadores).
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+
+## Quitar miembros y borrar el grupo (RF-11)
+
+FORM: «Ficha de persona», variante C de 3 (A «Quitar en la fila», B «Saldo a la vista»). Reglas del usuario: solo quien
+administra; quitar solo con saldo 0; borrar solo con todos en paz; quien ya no está no vuelve con el enlace y lo suyo queda
+de solo lectura. Fuera: salir por iniciativa propia, más administradores, recuperar un grupo borrado.
+
+CRITIQUE (⚠️ DEGRADED: single-context, sin sub-agentes por política de la sesión): detector limpio (regex) en los ficheros
+tocados; revisión visual en WebKit (iPhone 15) de la lista, las dos fichas, las dos hojas de borrar, Gastos, detalle de solo
+lectura, Actividad, invitación rechazada y aviso en Grupos; web-design-guidelines sin hallazgos. Fiel a la maqueta C; la nota
+«Toca a alguien…» solo sale si hay a quién tocar.

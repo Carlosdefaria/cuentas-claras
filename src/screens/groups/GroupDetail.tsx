@@ -7,7 +7,7 @@ import { UserPlus } from 'lucide-react'
 import { es } from '../../i18n/es'
 import { useSession } from '../../auth/session'
 import { db } from '../../lib/data'
-import { getGroup, listMembers, type GroupDetail as Group, type Member } from '../../lib/groups'
+import { activeMembers, getGroup, listMembers, type GroupDetail as Group, type Member } from '../../lib/groups'
 import { balancesOf, listExpenses, listSettlements, type ExpenseRow, type SettlementRow } from '../../lib/expenses'
 import { peopleOf } from '../../lib/people'
 import { formatCents } from '../../domain/money'
@@ -16,12 +16,12 @@ import { BalancesPanel } from '../expenses/BalancesPanel'
 import { ActivityPanel } from '../expenses/ActivityPanel'
 import { dataErrorMessage } from '../../lib/dataErrors'
 import { inviteUrl } from '../../lib/invite'
-import { initialOf, memberTalones, talonFor } from '../../lib/talon'
+import { talonFor } from '../../lib/talon'
 import { useAsync } from '../../lib/useAsync'
 import { ButtonLink, LoadError } from '../../components/ui'
-import { TALON_BG } from '../../components/talonBg'
 import { InstallHelp } from '../../pwa/InstallHelp'
 import { InviteSheet } from './InviteSheet'
+import { MembersPanel } from './MembersPanel'
 
 const T = es.groups.detail
 
@@ -133,9 +133,10 @@ function Loaded({
     tabRefs.current[target]?.focus()
   }
 
-  const talones = memberTalones(members)
   const people = peopleOf(members, me)
-  const balances = balancesOf(members.map((m) => m.userId), expenses, settlements)
+  const active = activeMembers(members)
+  // Saldos de quienes siguen (RF-11: quien ya no está tiene saldo 0 y lo suyo es de solo lectura).
+  const balances = balancesOf(active.map((m) => m.userId), expenses, settlements)
 
   return (
     <>
@@ -158,7 +159,7 @@ function Loaded({
       <h1 className="break-words font-rotulo text-[2rem] font-bold uppercase leading-[1.02] tracking-[0.01em]">{group.name}</h1>
       <div className="mt-2 flex items-center justify-between gap-3">
         <p className="text-tinta-suave">
-          {es.groups.members(members.length)} · {es.groups.currency}
+          {es.groups.members(active.length)} · {es.groups.currency}
         </p>
         <button
           ref={inviteButton}
@@ -199,22 +200,19 @@ function Loaded({
       {TABS.map((t) => (
         <div key={t.id} role="tabpanel" id={`${baseId}-panel-${t.id}`} aria-labelledby={`${baseId}-tab-${t.id}`} hidden={tab !== t.id} className="mt-4">
           {t.id === 'members' ? (
-            <>
-              <ul className="divide-y divide-papel-hondo rounded-xl bg-hoja shadow-[0_1px_2px_rgb(19_38_29/0.08)]">
-                {members.map((m, i) => (
-                  <li key={m.userId} className="flex min-h-14 items-center gap-3 px-3.5 py-2">
-                    <span aria-hidden className={`flex size-9 flex-none items-center justify-center rounded-full text-sm font-bold ${TALON_BG[talones[i]]}`}>
-                      {initialOf(m.name)}
-                    </span>
-                    <span className="min-w-0 flex-1 break-words font-semibold">{m.name}</span>
-                    <span className="flex-none text-sm text-tinta-suave">
-                      {[m.userId === me ? T.you : null, m.role === 'admin' ? T.admin : null].filter(Boolean).join(' · ') || T.member}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              {members.length === 1 && <p className="mt-3 text-center text-tinta-suave">{T.alone}</p>}
-            </>
+            <MembersPanel
+              groupId={group.id}
+              groupName={group.name}
+              members={members}
+              people={people}
+              balances={balances}
+              me={me}
+              onRemoved={(name) => onChanged(es.groups.manage.remove.done(name))}
+              onShowBalances={() => {
+                setTab('balances')
+                tabRefs.current.balances?.focus()
+              }}
+            />
           ) : t.id === 'activity' ? (
             tab === 'activity' && <ActivityPanel groupId={group.id} people={people} aliveExpenses={new Set(expenses.map((e) => e.id))}
                 aliveSettlements={new Set(settlements.map((x) => x.id))}

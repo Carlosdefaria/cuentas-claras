@@ -343,6 +343,29 @@ Principio del usuario: lo más minimalista posible y sin fricción al apuntar un
 - **Actividad**: «Tú pagaste 12,50 € a Ana», «Bea te pagó 10,00 €», «Ana registró un pago de Marta: 27,50 €», «Luis borró
   un pago» (importe tachado · de X a Y).
 
+### Quitar miembros y borrar el grupo (variante C de 3, elegida por el usuario: «Ficha de persona»)
+Reglas del usuario: solo quien administra, que no se quita a sí mismo; quitar solo con saldo 0; borrar el grupo solo con
+todos en paz; quien ya no está no vuelve con el enlace y lo suyo queda de solo lectura.
+- **Pestaña Miembros**: la lista de siempre; para quien administra, las filas de los demás son botones con chevron
+  (`ChevronRight` en `tinta-tenue`) y debajo la nota «Toca a alguien para ver su saldo o quitarlo del grupo.». Quien ya no
+  está sigue al final de la misma lista: círculo con borde discontinuo de 2 px en `trazo` (sin talón), nombre en
+  `tinta-suave` y «Ya no está» en `tinta-tenue`; no se toca. Al final, solo para quien administra, «Borrar grupo…»: enlace
+  discreto en rojo sello subrayado (44 px), no un botón lleno.
+- **Ficha de persona** (hoja inferior): círculo de 56 px en su talón, nombre en condensada 1.5rem y «En el grupo desde el
+  3 nov»; tarjeta blanca «Saldo» con «En paz» / «Le deben X» (verde a favor) / «Debe X» (rojo sello). Con saldo 0: qué pasa
+  al quitarla, «Quitar a X del grupo» (destructivo, `UserMinus`) y «Cancelar» (foco inicial). Con saldo: caja `papel` con
+  candado «Solo puedes quitar a X cuando su saldo esté a cero.», «Ver cómo saldar» (primario: cierra y abre Saldos) y
+  «Cerrar». Al quitar, franja `loteria-claro` «Has quitado a X del grupo.».
+- **¿Borrar <grupo>?** (hoja inferior): participación compacta en talón **salmón**; con todos en paz, «✓ Todos están en paz»
+  en verde a favor, qué desaparece y «Borrar grupo» (destructivo) + «Cancelar»; si no, candado, la lista de quién tiene saldo
+  pendiente («Tú · Te deben 10,00 €», «Bea · Debe 10,00 €») y «Ver cómo saldar» + «Cerrar». Al borrar, vuelta a Grupos con
+  la franja «Grupo borrado: «…».».
+- **Quien ya no está, en el historial**: círculo `papel-hondo` con la inicial en `tinta-tenue` y « · ya no está» en
+  `tinta-tenue` tras su nombre (filas de Gastos, detalle del gasto y del pago, Actividad). Los gastos y pagos en que participa
+  no tienen Editar ni Borrar: nota con candado (`Lock`) «X ya no está en el grupo, así que este gasto ya no se puede editar
+  ni borrar.». Actividad: «Tú quitaste a X del grupo», «Ana te quitó del grupo».
+- **Invitación**: a quien quitaron, caja discontinua «Ya no formas parte de este grupo» en lugar de «Unirme al grupo».
+
 ### Participación (componente propio)
 Talón superior en papel de color con el título en condensada, línea troquelada con muescas y cuerpo en
 `hoja` con el contenido. Es el contenedor de formularios clave y, más adelante, de cada parte de un gasto.

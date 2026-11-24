@@ -19,7 +19,7 @@ import { ButtonLink, LoadError } from '../../components/ui'
 import type { Person } from '../../lib/people'
 import { ConfirmDeleteSheet } from './ConfirmDeleteSheet'
 import { TALON_BG } from '../../components/talonBg'
-import { PersonDot } from './PersonDot'
+import { GoneMark, PersonDot } from './PersonDot'
 
 const T = es.expenses
 const longDate = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
@@ -77,7 +77,10 @@ export function ExpenseDetail() {
       </div>
       <div className={`troquel ${TALON_BG.mantequilla}`} style={{ backgroundImage: 'linear-gradient(to bottom, transparent 50%, var(--color-hoja) 50%)' }} aria-hidden />
       <div className="px-5 pb-5 pt-1">
-        <p className="text-tinta-suave">{T.detail.paidOn(payer?.isMe ? T.you : (payer?.name ?? T.someone), formatDay(expense.date))}</p>
+        <p className="text-tinta-suave">
+          {T.detail.paidOn(payer?.isMe ? T.you : (payer?.name ?? T.someone), formatDay(expense.date))}
+          <GoneMark person={payer} />
+        </p>
         <h2 className="mt-4 text-[0.9375rem] font-semibold">
           {expense.splitType === 'equal' ? T.detail.split : T.detail.splitBy(es.activity.splitNames[expense.splitType])}
         </h2>
@@ -89,6 +92,7 @@ export function ExpenseDetail() {
                 <PersonDot person={person} size="sm" />
                 <span className="min-w-0 flex-1 break-words font-semibold">
                   {person?.isMe ? T.youName(person.name) : (person?.name ?? T.someone)}
+                  <GoneMark person={person} />
                 </span>
                 {s.percentBp !== undefined && (
                   <span className="flex-none text-[0.8125rem] text-tinta-suave tabular-nums">{basisPointsToText(s.percentBp)} %</span>
