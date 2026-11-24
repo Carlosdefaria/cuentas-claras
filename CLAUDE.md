@@ -195,6 +195,8 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
   fichero apuntan ahí). Rama de comprobación que se conserva: `baseline-check` (el ensayo general de la puesta en
   marcha se hizo en `baseline-rehearsal`, ya borrada).
 - Probada por el usuario en el iPhone (registro con código, PWA instalada, grupo, gasto y pago) el 24-11-2026.
+- RF-11 (quitar miembros y borrar el grupo) probada por el usuario en el iPhone en production el 24-11-2026, tras
+  actualizar la PWA instalada.
 
 ## Riesgos conocidos
 - **Rendimiento de RLS** (resuelto en la migración 0006, solo en `test`): con el parche de `current_user_id()` las
