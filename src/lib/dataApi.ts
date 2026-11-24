@@ -5,7 +5,18 @@
 // - Nada se cachea: el service worker trata este origen como solo red y aquí no hay caché de respuestas.
 // - Los errores se convierten en DataApiError con un `kind` que la UI traduce (nunca el mensaje del servidor).
 
-export type DataErrorKind = 'network' | 'auth' | 'not-found' | 'forbidden' | 'invalid' | 'conflict' | 'unavailable' | 'unknown'
+export type DataErrorKind =
+  | 'network'
+  | 'auth'
+  | 'not-found'
+  | 'forbidden'
+  | 'invalid'
+  | 'conflict'
+  | 'unsettled'
+  | 'removed'
+  | 'read-only'
+  | 'unavailable'
+  | 'unknown'
 
 export class DataApiError extends Error {
   readonly kind: DataErrorKind
@@ -35,6 +46,12 @@ export function kindFor(status: number, code: string | undefined): DataErrorKind
       return 'invalid'
     case '40001': // el dato cambió desde que se leyó (bloqueo optimista de update_expense)
       return 'conflict'
+    case 'CC001': // saldo pendiente: no se puede quitar a alguien ni borrar el grupo (migración 0010)
+      return 'unsettled'
+    case 'CC002': // te quitaron de este grupo: no vuelves con el enlace
+      return 'removed'
+    case 'CC003': // gasto o pago de solo lectura: participa alguien que ya no está
+      return 'read-only'
   }
   if (code?.startsWith('PGRST30')) return 'auth' // JWT ausente, caducado o no válido
   if (status === 401) return 'auth'

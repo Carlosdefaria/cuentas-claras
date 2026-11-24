@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { DataApi } from './dataApi'
-import { createGroup, getGroup, invitePreview, listMembers, listMyGroups, validateGroupName } from './groups'
+import { activeMembers, goneNames, createGroup, deleteGroup, getGroup, invitePreview, listMembers, listMyGroups, removeMember, validateGroupName } from './groups'
 
 const fakeApi = (result: unknown) => {
   const api = { select: vi.fn(async () => result), rpc: vi.fn(async () => result) }
@@ -21,10 +21,10 @@ describe('validateGroupName', () => {
 })
 
 describe('consultas', () => {
-  it('listMyGroups pide el recuento de miembros y lo aplana', async () => {
+  it('listMyGroups pide el recuento de miembros activos y lo aplana', async () => {
     const api = fakeApi([{ id: ID, name: 'Piso', memberships: [{ count: 3 }] }])
     expect(await listMyGroups(api)).toEqual([{ id: ID, name: 'Piso', memberCount: 3 }])
-    expect(api.select).toHaveBeenCalledWith('groups?select=id,name,memberships(count)&order=created_at.desc,id.asc')
+    expect(api.select).toHaveBeenCalledWith('groups?select=id,name,memberships(count)&memberships.removed_at=is.null&order=created_at.desc,id.asc')
   })
 
   it('getGroup con un id que no es uuid no consulta y devuelve null', async () => {
@@ -37,10 +37,28 @@ describe('consultas', () => {
     expect(await getGroup(fakeApi([]), ID)).toBeNull()
   })
 
-  it('listMembers filtra por grupo y ordena por llegada', async () => {
-    const api = fakeApi([{ user_id: 'u1', name: 'Ana', role: 'admin', joined_at: 't' }])
-    expect(await listMembers(api, ID)).toEqual([{ userId: 'u1', name: 'Ana', role: 'admin', joinedAt: 't' }])
+  it('listMembers filtra por grupo, ordena por llegada e incluye a quien ya no está', async () => {
+    const api = fakeApi([
+      { user_id: 'u1', name: 'Ana', role: 'admin', joined_at: 't', removed_at: null },
+      { user_id: 'u2', name: 'Bea', role: 'member', joined_at: 't2', removed_at: 't3' },
+    ])
+    const members = await listMembers(api, ID)
+    expect(members).toEqual([
+      { userId: 'u1', name: 'Ana', role: 'admin', joinedAt: 't', removedAt: null },
+      { userId: 'u2', name: 'Bea', role: 'member', joinedAt: 't2', removedAt: 't3' },
+    ])
+    expect(activeMembers(members).map((m) => m.userId)).toEqual(['u1'])
+    expect(goneNames(['u1', 'u2', 'u2'], members)).toEqual(['Bea'])
+    expect(goneNames(['u1'], members)).toEqual([])
     expect(api.select).toHaveBeenCalledWith(`rpc/group_members?group_id=eq.${ID}&order=joined_at.asc,user_id.asc`)
+  })
+
+  it('removeMember y deleteGroup llaman a sus RPC', async () => {
+    const api = fakeApi(null)
+    await removeMember(api, ID, 'u2')
+    expect(api.rpc).toHaveBeenCalledWith('remove_member', { p_group_id: ID, p_user_id: 'u2' })
+    await deleteGroup(api, ID)
+    expect(api.rpc).toHaveBeenCalledWith('delete_group', { p_group_id: ID })
   })
 
   it('createGroup recorta el nombre', async () => {

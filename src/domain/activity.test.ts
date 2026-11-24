@@ -78,6 +78,15 @@ describe('parseActivity', () => {
     expect(parseActivity('group_created', { name: 'Lisboa' })).toEqual({ kind: 'group_created', name: 'Lisboa' })
   })
 
+  it('miembro quitado y grupo borrado', () => {
+    expect(parseActivity('member_removed', { user_id: B, name: 'Bea' })).toEqual({ kind: 'member_removed', userId: B, name: 'Bea' })
+    expect(parseActivity('member_removed', { user_id: B })).toEqual({ kind: 'member_removed', userId: B, name: null })
+    expect(parseActivity('member_removed', { name: 'Bea' })).toEqual({ kind: 'unknown' })
+    expect(parseActivity('member_removed', null)).toEqual({ kind: 'unknown' })
+    expect(parseActivity('group_deleted', { name: 'Lisboa' })).toEqual({ kind: 'group_deleted', name: 'Lisboa' })
+    expect(parseActivity('group_deleted', null)).toEqual({ kind: 'group_deleted', name: null })
+  })
+
   it('datos raros o tipos desconocidos no rompen: se ignoran los campos malos o queda «unknown»', () => {
     expect(parseActivity('expense_created', null)).toEqual({ kind: 'unknown' })
     expect(parseActivity('expense_created', { description: 'x' })).toEqual({ kind: 'unknown' })

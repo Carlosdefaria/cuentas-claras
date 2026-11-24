@@ -58,13 +58,14 @@ function SignedOutInvite({ code }: { code: string }) {
   )
 }
 
-function InvalidInvite() {
+/** Enlace no válido, o (RF-11) te quitaron de ese grupo y no puedes volver a entrar con el enlace. */
+function InvalidInvite({ removed = false }: { removed?: boolean }) {
   return (
     <>
       <SectionTitle>{T.title}</SectionTitle>
       <section className="mt-5 rounded-xl border-2 border-dashed border-trazo px-5 py-8 text-center">
-        <h2 className="text-lg font-semibold">{T.invalidTitle}</h2>
-        <p className="mx-auto mt-1.5 max-w-[34ch] text-tinta-suave">{T.invalidBody}</p>
+        <h2 className="text-lg font-semibold">{removed ? T.removedTitle : T.invalidTitle}</h2>
+        <p className="mx-auto mt-1.5 max-w-[34ch] text-tinta-suave">{removed ? T.removedBody : T.invalidBody}</p>
         <div className="mx-auto mt-6 max-w-xs">
           <ButtonLink to="/">{es.groups.detail.toGroups}</ButtonLink>
         </div>
@@ -78,6 +79,7 @@ function SignedInInvite({ code }: { code: string }) {
   if (preview.status === 'loading') return <InviteSkeleton />
   if (preview.status === 'error') {
     if (isDataError(preview.error, 'not-found')) return <InvalidInvite />
+    if (isDataError(preview.error, 'removed')) return <InvalidInvite removed />
     return (
       <>
         <SectionTitle>{T.title}</SectionTitle>

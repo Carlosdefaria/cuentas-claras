@@ -1,6 +1,6 @@
 // Pestaña Actividad (RF-10, variante A): qué ha pasado en el grupo, de lo más reciente a lo más antiguo, por días,
 // con autor y hora. Gastos añadidos, editados (con el antes → después) y borrados, pagos registrados y borrados, y
-// quién se une. Desde la red, sin caché; páginas de 50 con «Ver más». Un gasto o pago vivo se abre tocando su fila.
+// quién se une o a quién quitan (RF-11). Desde la red, sin caché; páginas de 50 con «Ver más». Un gasto o pago vivo se abre tocando su fila.
 
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
@@ -163,6 +163,15 @@ function Row({ item, people, href, today }: { item: ActivityItem; groupId: strin
       break
     case 'group_created':
       sentence = verb(T.groupCreated)
+      break
+    case 'member_removed': {
+      const removed = people.get(event.userId)
+      if (removed?.isMe) sentence = T.removedYou
+      else sentence = (me ? T.removed.me : T.removed.other)(removed?.name ?? event.name ?? es.expenses.someone)
+      break
+    }
+    case 'group_deleted':
+      sentence = verb(T.groupDeleted)
       break
   }
 

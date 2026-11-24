@@ -7,7 +7,8 @@ import { ArrowRight, Trash2 } from 'lucide-react'
 import { es } from '../../i18n/es'
 import { useSession } from '../../auth/session'
 import { db } from '../../lib/data'
-import { listMembers } from '../../lib/groups'
+import { goneNames, listMembers } from '../../lib/groups'
+import { ReadOnlyNote } from './ReadOnlyNote'
 import { deleteSettlement, getSettlement } from '../../lib/expenses'
 import { dataErrorMessage, isDataError } from '../../lib/dataErrors'
 import { peopleOf } from '../../lib/people'
@@ -68,7 +69,9 @@ export function SettlementDetail() {
   const from = people.get(s.fromUser)
   const to = people.get(s.toUser)
   const author = people.get(s.createdBy)
-  const mine = s.createdBy === me
+  const gone = goneNames([s.fromUser, s.toUser], members)
+  // Quien lo registró puede borrarlo, salvo si participa alguien que ya no está (RF-11: su saldo tiene que seguir en 0).
+  const mine = s.createdBy === me && gone.length === 0
   const label = (p: typeof from) => (p?.isMe ? T.balances.yourself : (p?.name ?? T.someone))
   const done = () => navigate(`/grupos/${id}`, { replace: true, state: { notice: S.remove.done(formatCents(s.amountCents)) } })
 
@@ -109,7 +112,7 @@ export function SettlementDetail() {
           <p className="text-tinta-suave">{S.on(formatDay(s.date))}</p>
         </div>
       </section>
-      <p className="mx-0.5 mt-3 text-[0.8125rem] text-tinta-suave">{mine ? S.addedByYou : S.addedBy(author?.name ?? T.someone)}</p>
+      <p className="mx-0.5 mt-3 text-[0.8125rem] text-tinta-suave">{s.createdBy === me ? S.addedByYou : S.addedBy(author?.name ?? T.someone)}</p>
       {mine ? (
         <>
           <button
@@ -139,6 +142,8 @@ export function SettlementDetail() {
             text={S.remove}
           />
         </>
+      ) : gone.length > 0 ? (
+        <ReadOnlyNote>{T.readOnly.settlement(gone)}</ReadOnlyNote>
       ) : (
         <p className="mx-0.5 mt-1 text-[0.8125rem] text-tinta-suave">{S.onlyCreator(author?.name ?? T.someone)}</p>
       )}

@@ -22,6 +22,8 @@ export type ActivityEvent =
   | { kind: 'settlement_deleted'; settlementId: string; fromUser: string; toUser: string; amountCents: number }
   | { kind: 'member_joined' }
   | { kind: 'group_created'; name: string | null }
+  | { kind: 'member_removed'; userId: string; name: string | null }
+  | { kind: 'group_deleted'; name: string | null }
   | { kind: 'unknown' }
 
 type Obj = Record<string, unknown>
@@ -63,7 +65,13 @@ export function parseActivity(type: string, payload: unknown): ActivityEvent {
   const p = isObj(payload) ? payload : null
   if (type === 'member_joined') return { kind: 'member_joined' }
   if (type === 'group_created') return { kind: 'group_created', name: str(p?.name) }
+  if (type === 'group_deleted') return { kind: 'group_deleted', name: str(p?.name) }
   if (!p) return { kind: 'unknown' }
+
+  if (type === 'member_removed') {
+    const userId = str(p.user_id)
+    return userId === null ? { kind: 'unknown' } : { kind: 'member_removed', userId, name: str(p.name) }
+  }
 
   if (type === 'settlement_created' || type === 'settlement_deleted') {
     const settlementId = str(p.settlement_id)

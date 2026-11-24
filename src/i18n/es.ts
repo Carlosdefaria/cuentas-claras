@@ -1,6 +1,9 @@
 // Textos de la interfaz (español). Centralizados para poder traducir más adelante.
 // Voz: tú, cercana y clara (ver PRODUCT.md).
 
+const listFormat = new Intl.ListFormat('es', { type: 'conjunction' })
+const list = (names: readonly string[]) => listFormat.format(names)
+
 export const es = {
   appName: 'Cuentas Claras',
   common: {
@@ -192,6 +195,8 @@ export const es = {
       loadError: 'No hemos podido cargar la invitación',
       invalidTitle: 'Este enlace no es válido',
       invalidBody: 'Puede que el grupo se haya borrado o que el enlace esté incompleto. Pide uno nuevo a quien te invitó.',
+      removedTitle: 'Ya no formas parte de este grupo',
+      removedBody: 'Quien lo administra te quitó del grupo, así que este enlace ya no te sirve para entrar.',
       pasteTitle: 'Unirme con un enlace',
       pasteLabel: 'Enlace o código de invitación',
       pasteHint: 'Pega el enlace que te han enviado.',
@@ -213,6 +218,13 @@ export const es = {
     someone: 'Alguien',
     you: 'tú',
     youName: (name: string) => `Tú (${name})`,
+    /** RF-11: lo de quien ya no está es de solo lectura. */
+    readOnly: {
+      expense: (names: readonly string[]) =>
+        `${list(names)} ya no ${names.length === 1 ? 'está' : 'están'} en el grupo, así que este gasto ya no se puede editar ni borrar.`,
+      settlement: (names: readonly string[]) =>
+        `${list(names)} ya no ${names.length === 1 ? 'está' : 'están'} en el grupo, así que este pago ya no se puede borrar.`,
+    },
     edit: {
       action: 'Editar',
       title: 'Editar gasto',
@@ -222,6 +234,7 @@ export const es = {
       reload: 'Ver la versión nueva',
       notAllowedTitle: 'No puedes editar este gasto',
       notAllowedBody: (name: string) => `Solo ${name} puede editarlo, porque lo añadió.`,
+      readOnlyTitle: 'Este gasto ya no se puede editar',
       toExpense: 'Ver el gasto',
     },
     remove: {
@@ -387,6 +400,9 @@ export const es = {
     deleted: { other: 'borró', me: 'borraste' },
     joined: { other: 'se unió al grupo', me: 'te uniste al grupo' },
     groupCreated: { other: 'creó el grupo', me: 'creaste el grupo' },
+    removed: { other: (name: string) => `quitó a ${name} del grupo`, me: (name: string) => `quitaste a ${name} del grupo` },
+    removedYou: 'te quitó del grupo',
+    groupDeleted: { other: 'borró el grupo', me: 'borraste el grupo' },
     paidBy: (name: string) => `pagó ${name}`,
     paidByYou: 'pagaste tú',
     descriptionWas: (old: string) => `antes «${old}»`,
@@ -416,6 +432,9 @@ export const es = {
     forbidden: 'No tienes acceso a esto.',
     invalid: 'Revisa los datos y vuelve a probar.',
     conflict: 'Esto ha cambiado mientras lo tenías abierto. Vuelve a abrirlo para ver la versión nueva.',
+    unsettled: 'Todavía hay saldos pendientes. Vuelve a mirar los saldos: puede que alguien haya apuntado algo.',
+    removed: 'Ya no formas parte de este grupo: te quitó quien lo administra.',
+    readOnly: 'Aquí participa alguien que ya no está en el grupo, así que ya no se puede cambiar.',
     generic: 'Algo ha fallado. Vuelve a probar.',
   },
   account: {
