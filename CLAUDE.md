@@ -178,11 +178,12 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
   - Data API: `add_default_grants` **false**, `db_anon_role` anonymous, `jwt_role_claim_key` .role, solo `public`,
     OpenAPI desactivado.
   - Esquema: `db/baseline.sql` aplicado con `npm run db:migrate:production` (anotado en `app_migrations.applied`).
+    Después, `0010_remove_member_delete_group.sql` (RF-11, 24-11-2026, ensayada antes en `baseline-check`).
     `schema-diff` con `test`: idéntico salvo `pgrst.openapi_mode`.
   - Vercel (entorno Production): `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET` (distinto del de Preview) y
     `VITE_NEON_DATA_API_URL` de production; tras cambiarlas, volver a desplegar (la `VITE_` se incluye al compilar).
 - **Cambiar el esquema de production** (con autorización explícita cada vez):
-  1. Migración nueva en `db/migrations/0010_…sql`; aplicarla y probarla en `test` (`db:migrate`, `test:db`, e2e).
+  1. Migración nueva en `db/migrations/00NN_…sql` (la siguiente libre: 0011); aplicarla y probarla en `test` (`db:migrate`, `test:db`, e2e).
   2. Ensayo en una rama `baseline-*` creada desde production o reutilizando `baseline-check`
      (`DB_ENV=.env.baseline….local npm run db:migrate -- --dry-run`, luego sin `--dry-run`, y `test:db`).
   3. `CONFIRM_PRODUCTION=floral-shape-78727958/production npm run db:migrate:production` (en seco) → revisar → con
