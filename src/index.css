@@ -58,6 +58,16 @@
     touch-action: manipulation;
   }
 
+  /*
+   * App instalada (data-app-instalada, ver src/pwa/installedMode.ts): mantener pulsado un enlace o un botón no abre la
+   * vista previa de enlaces de iOS ni selecciona su texto. Campos, enlace de invitación y textos siguen seleccionables.
+   */
+  [data-app-instalada] :is(a, button, summary, label, [role="tab"]) {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
   /* Destino del enlace «Saltar al contenido»: recibe el foco sin dibujar el anillo. */
   main:focus {
     outline: none;

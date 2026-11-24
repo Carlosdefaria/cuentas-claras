@@ -44,6 +44,9 @@ Se construyó por fases (PRD §11). MVP completo (con RF-11) y en production; lo
 - Service worker con **Serwist** (plugin de Vite). Sin él, Android no ofrece instalar.
 - `<meta name="theme-color">` y metas de Apple (`apple-mobile-web-app-capable`, título, estilo de barra).
 - iOS no tiene `beforeinstallprompt`: mostrar ayuda "Compartir → Añadir a pantalla de inicio".
+- En la app instalada (`data-app-instalada` en `<html>`, `src/pwa/installedMode.ts`), mantener pulsado un enlace o botón
+  no abre la vista previa de enlaces de iOS ni selecciona su texto (`-webkit-touch-callout`/`user-select: none` en
+  `index.css`); en Safari, comportamiento normal de una web. Campos y textos siguen seleccionables.
 - Probar la instalación en móviles reales (iOS y Android), no solo en escritorio.
 
 ### Sesión first-party (iOS) y service worker
