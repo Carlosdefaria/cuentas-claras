@@ -173,8 +173,9 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
 - Nunca tests ni e2e contra production (crearían datos reales). `.env.local` → production (`neon env pull --branch
   production --file .env.local`), ignorado por git.
 - La línea base consolida 0001–0009 (historial en `db/migrations-legacy/`; las referencias «migración 000X» de este
-  fichero apuntan ahí). Ramas de comprobación que se conservan: `baseline-check` (y `baseline-rehearsal`, el ensayo
-  general de la puesta en marcha, hasta que se decida borrarla).
+  fichero apuntan ahí). Rama de comprobación que se conserva: `baseline-check` (el ensayo general de la puesta en
+  marcha se hizo en `baseline-rehearsal`, ya borrada).
+- Probada por el usuario en el iPhone (registro con código, PWA instalada, grupo, gasto y pago) el 24-11-2026.
 
 ## Riesgos conocidos
 - **Rendimiento de RLS** (resuelto en la migración 0006, solo en `test`): con el parche de `current_user_id()` las
@@ -216,8 +217,8 @@ Respetar la tabla Dentro/Fuera del PRD §4. Nada de lo marcado "Fuera (v2+)" sin
 - El contenedor cloud solo permite HTTPS: se usa el driver HTTP de Neon contra el host del endpoint de test (`NODE_USE_ENV_PROXY=1`, ya incluido en los scripts).
 - CLI de Neon en el contenedor cloud: `NEON_API_KEY=proxy-injected neon …` (el proxy inyecta la key real).
 - Una rama nueva de Neon tiene hosts nuevos (BD `-pooler`, `.neonauth`, `.apirest`): hay que añadirlos a la red del
-  entorno cloud «cuentas-claras» para usarlos desde el contenedor (ya están los de `test`, `baseline-check`,
-  `baseline-rehearsal` y `production`).
+  entorno cloud «cuentas-claras» para usarlos desde el contenedor (ya están los de `test`, `baseline-check` y
+  `production`).
 - **Tras una migración que cree o cambie funciones/tablas expuestas**, refrescar la caché de esquema de la Data API de
   `test` o PostgREST responde `404 PGRST202` (la app muestra «Algo ha fallado»):
   `NEON_API_KEY=proxy-injected NODE_USE_ENV_PROXY=1 neon data-api refresh-schema --branch test --database neondb`
