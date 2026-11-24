@@ -9,7 +9,7 @@ import { Check, ChevronDown } from 'lucide-react'
 import { es } from '../../i18n/es'
 import { useSession } from '../../auth/session'
 import { db } from '../../lib/data'
-import { getGroup, listMembers, type Member } from '../../lib/groups'
+import { activeMembers, getGroup, goneNames, listMembers, type Member } from '../../lib/groups'
 import { createExpense, getExpense, updateExpense, type ExpenseRow } from '../../lib/expenses'
 import { dataErrorMessage, isDataError } from '../../lib/dataErrors'
 import { localToday } from '../../lib/dates'
@@ -71,6 +71,10 @@ export function EditExpense() {
     const author = members.find((m) => m.userId === expense.createdBy)?.name ?? T.someone
     return <Missing title={T.edit.notAllowedTitle} body={T.edit.notAllowedBody(author)} to={`/grupos/${id}/gastos/${expense.id}`} action={T.edit.toExpense} />
   }
+  const gone = goneNames([expense.paidBy, ...expense.shares.map((s) => s.userId)], members)
+  if (gone.length > 0) {
+    return <Missing title={T.edit.readOnlyTitle} body={T.readOnly.expense(gone)} to={`/grupos/${id}/gastos/${expense.id}`} action={T.edit.toExpense} />
+  }
   return <ExpenseForm groupId={id} members={members} editing={expense} />
 }
 
@@ -100,12 +104,14 @@ function errorText(errors: ExpenseErrors) {
   }
 }
 
-function ExpenseForm({ groupId, members, editing }: { groupId: string; members: Member[]; editing?: ExpenseRow }) {
+function ExpenseForm({ groupId, members: allMembers, editing }: { groupId: string; members: Member[]; editing?: ExpenseRow }) {
   const { state } = useSession()
   const me = state.status === 'signed-in' ? state.user.id : null
   const navigate = useNavigate()
   const location = useLocation()
-  const people = useMemo(() => peopleOf(members, me), [members, me])
+  // Talones con todos (nadie cambia de color); el formulario solo ofrece a quien sigue en el grupo (RF-11).
+  const people = useMemo(() => peopleOf(allMembers, me), [allMembers, me])
+  const members = useMemo(() => activeMembers(allMembers), [allMembers])
   const ordered = useMemo(() => [...members].sort((a, b) => Number(b.userId === me) - Number(a.userId === me)), [members, me])
 
   // Al editar, el formulario empieza con el gasto guardado; al añadir, vacío, pagas tú y entre todos, hoy.

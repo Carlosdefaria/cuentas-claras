@@ -7,7 +7,8 @@ import { Pencil, Trash2 } from 'lucide-react'
 import { es } from '../../i18n/es'
 import { useSession } from '../../auth/session'
 import { db } from '../../lib/data'
-import { listMembers } from '../../lib/groups'
+import { goneNames, listMembers } from '../../lib/groups'
+import { ReadOnlyNote } from './ReadOnlyNote'
 import { deleteExpense, getExpense, type ExpenseRow } from '../../lib/expenses'
 import { dataErrorMessage, isDataError } from '../../lib/dataErrors'
 import { localToday, whenLabel } from '../../lib/dates'
@@ -18,7 +19,7 @@ import { ButtonLink, LoadError } from '../../components/ui'
 import type { Person } from '../../lib/people'
 import { ConfirmDeleteSheet } from './ConfirmDeleteSheet'
 import { TALON_BG } from '../../components/talonBg'
-import { PersonDot } from './PersonDot'
+import { GoneMark, PersonDot } from './PersonDot'
 
 const T = es.expenses
 const longDate = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
@@ -76,7 +77,10 @@ export function ExpenseDetail() {
       </div>
       <div className={`troquel ${TALON_BG.mantequilla}`} style={{ backgroundImage: 'linear-gradient(to bottom, transparent 50%, var(--color-hoja) 50%)' }} aria-hidden />
       <div className="px-5 pb-5 pt-1">
-        <p className="text-tinta-suave">{T.detail.paidOn(payer?.isMe ? T.you : (payer?.name ?? T.someone), formatDay(expense.date))}</p>
+        <p className="text-tinta-suave">
+          {T.detail.paidOn(payer?.isMe ? T.you : (payer?.name ?? T.someone), formatDay(expense.date))}
+          <GoneMark person={payer} />
+        </p>
         <h2 className="mt-4 text-[0.9375rem] font-semibold">
           {expense.splitType === 'equal' ? T.detail.split : T.detail.splitBy(es.activity.splitNames[expense.splitType])}
         </h2>
@@ -88,6 +92,7 @@ export function ExpenseDetail() {
                 <PersonDot person={person} size="sm" />
                 <span className="min-w-0 flex-1 break-words font-semibold">
                   {person?.isMe ? T.youName(person.name) : (person?.name ?? T.someone)}
+                  <GoneMark person={person} />
                 </span>
                 {s.percentBp !== undefined && (
                   <span className="flex-none text-[0.8125rem] text-tinta-suave tabular-nums">{basisPointsToText(s.percentBp)} %</span>
@@ -99,13 +104,18 @@ export function ExpenseDetail() {
         </ul>
       </div>
     </section>
-    <Authorship groupId={id} expense={expense} author={people.get(expense.createdBy)} />
+    <Authorship
+      groupId={id}
+      expense={expense}
+      author={people.get(expense.createdBy)}
+      gone={goneNames([expense.paidBy, ...expense.shares.map((s) => s.userId)], members)}
+    />
     </>
   )
 }
 
 /** Quién lo añadió (y si se editó) y, solo para esa persona, «Editar» y «Borrar». */
-function Authorship({ groupId, expense, author }: { groupId: string; expense: ExpenseRow; author: Person | undefined }) {
+function Authorship({ groupId, expense, author, gone }: { groupId: string; expense: ExpenseRow; author: Person | undefined; gone: string[] }) {
   const navigate = useNavigate()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -114,8 +124,9 @@ function Authorship({ groupId, expense, author }: { groupId: string; expense: Ex
 
   // created_at y updated_at coinciden al crearlo (misma transacción): distintos = se ha editado.
   const edited = new Date(expense.updatedAt).getTime() - new Date(expense.createdAt).getTime() > 1000
-  const mine = author?.isMe === true
-  const who = mine ? T.detail.addedByYou : T.detail.addedBy(author?.name ?? T.someone)
+  // Solo quien lo añadió, y nunca si participa alguien que ya no está (RF-11: su saldo tiene que seguir en 0).
+  const mine = author?.isMe === true && gone.length === 0
+  const who = author?.isMe ? T.detail.addedByYou : T.detail.addedBy(author?.name ?? T.someone)
   const line = edited ? `${who} · ${T.detail.edited(whenLabel(expense.updatedAt, localToday()))}` : who
 
   async function confirmDelete() {
@@ -158,6 +169,8 @@ function Authorship({ groupId, expense, author }: { groupId: string; expense: Ex
             {T.remove.action}
           </button>
         </div>
+      ) : gone.length > 0 ? (
+        <ReadOnlyNote>{T.readOnly.expense(gone)}</ReadOnlyNote>
       ) : (
         <p className="mx-0.5 mt-1 text-[0.8125rem] text-tinta-suave">{T.detail.onlyCreator(author?.name ?? T.someone)}</p>
       )}

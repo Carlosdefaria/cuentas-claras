@@ -20,6 +20,12 @@ export function dataErrorMessage(error: unknown): string {
       return E.invalid
     case 'conflict':
       return E.conflict
+    case 'unsettled':
+      return E.unsettled
+    case 'removed':
+      return E.removed
+    case 'read-only':
+      return E.readOnly
     default:
       return E.generic
   }

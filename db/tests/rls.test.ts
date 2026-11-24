@@ -126,7 +126,7 @@ describe('group_members()', () => {
     const [rows] = await asUser(u.dani, () => [sql.query(`select * from public.group_members()`)])
     expect(rows.every((r) => r.group_id === groupB)).toBe(true)
     expect(rows.map((r) => r.user_id)).toEqual([u.dani])
-    expect(Object.keys(rows[0]).sort()).toEqual(['group_id', 'joined_at', 'name', 'role', 'user_id'])
+    expect(Object.keys(rows[0]).sort()).toEqual(['group_id', 'joined_at', 'name', 'removed_at', 'role', 'user_id'])
   })
 
   it('un miembro del grupo A ve a sus tres miembros con nombre', async () => {

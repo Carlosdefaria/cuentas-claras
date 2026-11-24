@@ -11,6 +11,9 @@ describe('dataErrorMessage', () => {
     ['forbidden', es.data.forbidden],
     ['invalid', es.data.invalid],
     ['conflict', es.data.conflict],
+    ['unsettled', es.data.unsettled],
+    ['removed', es.data.removed],
+    ['read-only', es.data.readOnly],
     ['unknown', es.data.generic],
   ] as const)('%s', (kind, message) => {
     expect(dataErrorMessage(new DataApiError(kind, 400, 'X', 'mensaje técnico en inglés'))).toBe(message)
